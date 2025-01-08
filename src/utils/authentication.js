@@ -1,0 +1,19 @@
+export default {
+    checkLogin:()=>{
+        if(localStorage.getItem("token")){
+            window.location.href="/category"
+        }
+    },
+    checkAuthentication:(path)=>{
+        if(!localStorage.getItem("token")){
+            window.location.href="/login"
+        }
+    },
+    removeAuthentication:()=>{
+        localStorage.removeItem("token")
+        window.location.href="/login"
+    },
+    login:(data)=>{
+        window.location.href="/category"
+    }
+}
