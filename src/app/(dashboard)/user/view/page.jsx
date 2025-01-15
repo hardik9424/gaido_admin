@@ -7,14 +7,14 @@ import Grid from '@mui/material/Grid'
 // Component Imports
 import UserLeftOverview from '@views/apps/user/view/user-left-overview'
 import UserRight from '@views/apps/user/view/user-right'
-import { getAllUser } from '@/app/api'
+// import { getAllUser } from '@/app/api'
 
 const OverViewTab = dynamic(() => import('@views/apps/user/view/user-right/overview'))
 const SecurityTab = dynamic(() => import('@views/apps/user/view/user-right/security'))
 const BillingPlans = dynamic(() => import('@views/apps/user/view/user-right/billing-plans'))
 const NotificationsTab = dynamic(() => import('@views/apps/user/view/user-right/notifications'))
 const ConnectionsTab = dynamic(() => import('@views/apps/user/view/user-right/connections'))
-const ChatDetails = dynamic(() => import('@views/apps/user/view/user-right/chat'))
+// const ChatDetails = dynamic(() => import('@views/apps/user/view/user-right/chat'))
 
 // Vars
 const tabContentList = data => ({
@@ -22,14 +22,14 @@ const tabContentList = data => ({
   security: <SecurityTab />,
   'billing-plans': <BillingPlans data={data} />,
   notifications: <NotificationsTab />,
-  Chat: <ChatDetails />
+  // Chat: <ChatDetails />
 })
 
 // connections: <ConnectionsTab />
 
 const getPricingData = async () => {
   // Vars
-  const res = await getAllUser()
+  // const res = await getAllUser()
 
   return res?.data?.data
 
