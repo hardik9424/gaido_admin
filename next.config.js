@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'build',
+  output: 'build',
   crossOrigin: 'anonymous',
   eslint: {
     // Warning: This allows production builds to successfully complete even if

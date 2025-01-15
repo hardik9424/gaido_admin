@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography'
 import RoleCards from './RoleCards'
 import RolesTable from './RolesTable'
 
-const Roles = ({ userData }) => {
+const Roles = () => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
