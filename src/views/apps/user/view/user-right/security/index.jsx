@@ -1117,7 +1117,7 @@ import CustomTextField from '@core/components/mui/TextField';
 import 'react-toastify/dist/ReactToastify.css';
 
 // API Imports
-import { getUserById, updateSubCategory, uploadImage, deleteCategory } from '@/app/api';
+// import { getUserById, updateSubCategory, uploadImage, deleteCategory } from '@/app/api';
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css';
@@ -1203,7 +1203,7 @@ const SecurityTab = () => {
 
   const handleDeleteSubCategory = async subcategoryId => {
     try {
-      await deleteCategory({ id: subcategoryId }) // Assuming this is the correct delete API
+      // await deleteCategory({ id: subcategoryId }) // Assuming this is the correct delete API
       setData(prevData => prevData.filter(subcategory => subcategory.id !== subcategoryId))
       toast.success('Subcategory deleted successfully')
     } catch (error) {
@@ -1232,7 +1232,7 @@ const SecurityTab = () => {
           const formData = new FormData()
 
           formData.append('file', values.image)
-          const uploadResponse = await uploadImage(formData)
+          // const uploadResponse = await uploadImage(formData)
 
           imageUrl = uploadResponse.data.data.fileUrl
         }
@@ -1244,7 +1244,7 @@ const SecurityTab = () => {
           image: imageUrl
         }
 
-        await updateSubCategory(payload)
+        // await updateSubCategory(payload)
         setData(prevData =>
           prevData.map(subcategory =>
             subcategory.id === editingSubCategory.id
