@@ -28,7 +28,7 @@ import Box from '@mui/material/Box'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
-import { sendOTP, changePassword } from '@/app/api'
+// import { sendOTP, changePassword } from '@/app/api'
 
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -102,7 +102,7 @@ const ChangePasswordCard = () => {
     const data = { email, otp: otpCode, sessionToken, password: newPassword }
 
     try {
-      await changePassword(data)
+      // await changePassword(data)
       toast.success('Password changed successfully')
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {

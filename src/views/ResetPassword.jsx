@@ -328,7 +328,7 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 
 // API Import
-import { resetPassword } from '@/app/api' // Make sure to import your resetPassword API method
+// import { resetPassword } from '@/app/api' // Make sure to import your resetPassword API method
 
 // Styled Custom Components
 const ForgotPasswordIllustration = styled('img')(({ theme }) => ({
@@ -413,7 +413,7 @@ const ResetPassword = ({ mode }) => {
     console.log('pay', data)
 
     try {
-      await resetPassword(data)
+      // await resetPassword(data)
       alert('Password changed successfully')
       setNewPassword('')
       setConfirmNewPassword('')

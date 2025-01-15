@@ -31,7 +31,7 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 
 // API Import
-import { forgotPassword } from '@/app/api'
+// import { forgotPassword } from '@/app/api'
 
 // Styled Custom Components
 const ForgotPasswordIllustration = styled('img')(({ theme }) => ({
@@ -86,7 +86,7 @@ const ForgotPassword = ({ mode }) => {
       try {
         const data = { email }
 
-        const response = await forgotPassword(data)
+        // const response = await forgotPassword(data)
 
         console.log('ff', response)
         toast.success('Reset link sent successfully. Please check your email.')

@@ -57,7 +57,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import tableStyles from '@core/styles/table.module.css'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 
-import { getusers, blockUser, unblockUser, updatePawPoints, appUserList } from '@/app/api'
+import { appUserList } from '@/app/api'
 
 import 'react-toastify/dist/ReactToastify.css'
 
