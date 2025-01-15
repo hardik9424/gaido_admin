@@ -21,7 +21,7 @@ import Box from '@mui/material/Box'
 import CustomTextField from '@core/components/mui/TextField'
 
 // API Imports
-import { getAdminDetails, updateAdminDetails } from '@/app/api'
+// import { getAdminDetails, updateAdminDetails } from '@/app/api'
 
 // Initial Data
 const initialData = {
@@ -79,7 +79,7 @@ const AccountDetails = () => {
 
   useEffect(() => {
     if (adminDetails?.id) {
-      fetchDetails(adminDetails.id)
+      // fetchDetails(adminDetails.id)
     }
   }, [adminDetails])
 
