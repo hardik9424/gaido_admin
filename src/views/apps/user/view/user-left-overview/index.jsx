@@ -75,7 +75,7 @@ import Button from '@mui/material/Button';
 import UserDetails from './UserDetails';
 import UserPlan from './UserPlan';
 
-import { getAllUser } from '@/app/api';
+// import { getAllUser } from '@/app/api';
 
 const UserLeftOverview = ({ userData }) => {
   const [users, setUsers] = useState([]);
@@ -84,7 +84,7 @@ const UserLeftOverview = ({ userData }) => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await getAllUser();
+      // const response = await getAllUser();
 
       setUsers(response.data.data);
     } catch (error) {

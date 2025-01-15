@@ -44,7 +44,7 @@ import CustomAvatar from '@core/components/mui/Avatar'
 import CustomTextField from '@core/components/mui/TextField'
 
 // API Imports
-import { getUserById, updateCategory, deleteCategory, uploadImage } from '@/app/api'
+// import { getUserById, updateCategory, deleteCategory, uploadImage } from '@/app/api'
 
 // Style Imports
 import 'react-toastify/dist/ReactToastify.css'
@@ -397,7 +397,7 @@ const ProjectListTable = () => {
 
   const handleDeleteCategory = async categoryId => {
     try {
-      await deleteCategory({ id: categoryId })
+      // await deleteCategory({ id: categoryId })
       setData(prevData => prevData.filter(category => category.id !== categoryId))
       toast.success('Category deleted successfully')
     } catch (error) {
@@ -436,7 +436,7 @@ const ProjectListTable = () => {
           const formData = new FormData()
 
           formData.append('file', values.image)
-          const uploadResponse = await uploadImage(formData)
+          // const uploadResponse = await uploadImage(formData)
 
           imageUrl = uploadResponse.data.data.fileUrl
         }
