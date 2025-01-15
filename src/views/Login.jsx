@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 // Next Imports
 import { useRouter } from 'next/navigation'
 
+import Cookies from 'js-cookie'
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
@@ -21,7 +22,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import * as Yup from 'yup'
 
 // API Imports
-import { login, loginAdminUser } from '../app/api/index.js'
+import { loginAdminUser } from '../app/api/index.js'
 
 // Component Imports
 import Link from '@components/Link'
@@ -33,6 +34,7 @@ import themeConfig from '@configs/themeConfig'
 
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
+
 import { useSettings } from '@core/hooks/useSettings'
 
 // Styled Custom Components
@@ -72,11 +74,12 @@ const LoginV2 = ({ mode }) => {
   const lightImg = '/images/pages/misc-mask-light.png'
   const darkIllustration = '/images/illustrations/auth/v2-login-dark.png'
   const lightIllustration = '/images/pages/misc-mask-light.png'
-  const borderedDarkIllustration = '/images/loader/gi5.png'
-  const borderedLightIllustration = '/images/loader/gi5.png'
+  const borderedDarkIllustration = '/images/loader/login.png'
+  const borderedLightIllustration = '/images/loader/login.png'
 
   // Hooks
   const router = useRouter()
+
   const { settings } = useSettings()
   const theme = useTheme()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
@@ -106,12 +109,12 @@ const LoginV2 = ({ mode }) => {
       router.push('/login')
     }
   }, [router])
-  const setCookie = (name, value, days) => {
-    const date = new Date()
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
-    const expires = 'expires=' + date.toUTCString()
-    document.cookie = `${name}=${value}; ${expires}; path=/; Secure; HttpOnly`
-  }
+  // const setCookie = (name, value, days) => {
+  //   const date = new Date()
+  //   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
+  //   const expires = 'expires=' + date.toUTCString()
+  //   document.cookie = `${name}=${value}; ${expires}; path=/; Secure; HttpOnly`
+  // }
 
   const handleClickShowPassword = useCallback(() => {
     setIsPasswordShown(prev => !prev)
@@ -136,7 +139,7 @@ const LoginV2 = ({ mode }) => {
   //           localStorage.setItem('permissions', JSON.stringify(permissions))
   //           localStorage.setItem('user', JSON.stringify(user))
   //         }
-  //         setCookie('authToken', token, 7)
+  //
 
   //         // if (apiResponse?.data?.data?.token) {
   //         //   const userDetails = apiResponse.data.data.userDetails[0]
@@ -193,30 +196,41 @@ const LoginV2 = ({ mode }) => {
           if (apiResponse?.data?.data) {
             const { accessToken, user } = apiResponse?.data?.data
             const { role, permissions } = user
+            // Cookies.set('authToken', accessToken, { expires: 7, path: '/' })
 
             // Save token, role, permissions, and user to localStorage
+            // setCookie('authToken', token, 7)
+            document.cookie =
+              `token=${accessToken}; path=/; expires=` + new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
+
             localStorage.setItem('token', accessToken)
             localStorage.setItem('role', role)
             localStorage.setItem('permissions', JSON.stringify(permissions))
             localStorage.setItem('user', JSON.stringify(user))
 
             // Set the token as a cookie
-            setCookie('authToken', accessToken, 7)
+            // setCookie('authToken', accessToken, 7)
 
             // Define permission-to-page mapping
             const permissionPageMap = {
-              Dashboard: '/home',
-              'Create Membership': '/category',
+              Admin: '/role/newrole',
               Users: '/user/list',
-              Community: '/community',
-              Post: '/post',
-              Notification: '/notification',
-              'Report User': '/reportuser',
-              'Create Hospital': '/hospital',
-              'Create Vet Profile': '/vet',
-              'Payments Management': '/subcategory',
-              'Admin User': '/role/newrole' // Could also navigate to a parent page or a submenu
+              Dashboard: '/home',
+              Functions: '/functions',
+              Industry: '/industory',
+              'Job Roles': '/jobroles',
+              News: '/news',
+              'Privacy Policy': '/privacypolicy',
+              'Terms & Conditions': '/termsandconditions'
             }
+            let redirectPage = '/user/list'
+            for (let permission of permissions) {
+              if (permissionPageMap[permission.name]) {
+                redirectPage = permissionPageMap[permission.name]
+                break
+              }
+            }
+            router.push(redirectPage)
             // const validPermissions = permissions.filter(permission => permissionPageMap[permission])
             // // Determine which page to navigate based on user's permissions
             // const defaultPage = permissions.find(permission => permissionPageMap[permission])
@@ -225,7 +239,8 @@ const LoginV2 = ({ mode }) => {
 
             // Redirect to the determined page
             // router.push(defaultPage)
-            router.push(permissionPageMap.Users)
+
+            // router.push(permissionPageMap.Users)
 
             toast.success('Login successful!')
           } else {
@@ -268,7 +283,7 @@ const LoginV2 = ({ mode }) => {
             }
           )}
         >
-          <LoginIllustration src={characterIllustration} alt='character-illustration' />
+          <LoginIllustration sx={{ width: '100%' }} src={characterIllustration} alt='character-illustration' />
           {!hidden && <MaskImg alt='mask' src={authBackground} />}
         </div>
       </div>

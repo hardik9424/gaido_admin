@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 import { useRouter } from 'next/navigation'
 
@@ -26,7 +26,11 @@ import {
   Paper,
   TablePagination,
   LinearProgress,
-  Tooltip
+  Tooltip,
+  CardContent,
+  CardMedia,
+  Card,
+  Pagination
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -37,15 +41,34 @@ import {
 
 import ReactQuill from 'react-quill'
 
+import { ToastContainer, toast } from 'react-toastify'
+
+import 'react-toastify/dist/ReactToastify.css'
+
 import 'react-quill/dist/quill.snow.css'
-import { getAllNews, getIndustryList, createNew } from '@/app/api'
+
+import Quill from 'quill'
+
+import ImageUploader from 'quill-image-uploader'
+
+import 'quill-image-uploader/dist/quill.imageUploader.min.css'
+
+// import { htmlToMarkdown, markdownToHtml } from './Parser'
+
+Quill.register('modules/imageUploader', ImageUploader)
+
+import ProtectedRoute from '@components/ProtectedRoute'
+
+import { getAllNews, getIndustryList, createNew, updateNews, deleteNews, uploadFile, adminDetails } from '@/app/api'
+import CustomTextField from '@/@core/components/mui/TextField'
 
 const MainPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     details: '', // For React Quill content
-    isImportant: false
+
+    tags: []
   })
 
   const [isFormValid, setIsFormValid] = useState({
@@ -58,21 +81,129 @@ const MainPage = () => {
   const [industries, setIndustries] = useState([]) // Stores the list of industries
   const [editingIndex, setEditingIndex] = useState(null) // Tracks which industry is being edited
   const [industryLists, setIndustriesLists] = useState([])
-  const [page, setPage] = useState(0) // Zero-based page index for Material UI pagination
+  const [page, setPage] = useState(1) // Zero-based page index for Material UI pagination
   const [rowsPerPage, setRowsPerPage] = useState(10) // Number of rows per page
   const [viewOptionsModalOpen, setViewOptionsModalOpen] = useState(false) // For "View Options" modal
   const [selectedQuestion, setSelectedQuestion] = useState(null) // Track selected question for viewing options
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false) // State for confirmation dialog
   const [deleteIndex, setDeleteIndex] = useState(null) // Track the industry to delete
+  const [htmlContent, setHtmlContent] = useState('') // Stores the HTML content for the modal
+  const [viewModalOpen, setViewModalOpen] = useState(false) // Controls the visibility of the modal
+  const [totalItems, setTotalItems] = useState('')
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [permissions, setPermissions] = useState({ create: false, read: false, edit: false, delete: false })
+  const [adminId, setAdminId] = useState('')
+  const [touchedFields, setTouchedFields] = useState({})
+  const DebouncedInput = ({ value: initialValue, onChange, debounce = 700, ...props }) => {
+    const [value, setValue] = useState(initialValue)
+
+    useEffect(() => {
+      setValue(initialValue)
+    }, [initialValue])
+
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        onChange(value)
+      }, debounce)
+
+      return () => clearTimeout(timeout)
+    }, [value, onChange, debounce])
+
+    return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
+  }
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    const parsedData = JSON.parse(userData)
+    setAdminId(parsedData._id)
+  }, [])
+  const fetchPermissions = async () => {
+    if (!adminId) return // Skip if adminId is not set
+
+    try {
+      const response = await adminDetails({ userId: adminId })
+      console.log('perm', response)
+      const userPermissions = response?.data?.data?.data?.user?.permissions || []
+      const industryPermissions = userPermissions.find(perm => perm.name === 'Industry')
+
+      if (industryPermissions) {
+        setPermissions(industryPermissions)
+      } else {
+        console.warn('Industry permissions not found')
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error)
+    }
+  }
+  useEffect(() => {
+    if (adminId) {
+      fetchPermissions()
+    }
+  }, [adminId])
+
+  const handleViewDetails = content => {
+    setHtmlContent(content.content) // Set the HTML content
+    setFormData({
+      name: content?.name,
+      description: content?.description,
+      details: content?.content // Set the HTML content
+    })
+
+    setViewModalOpen(true) // Open the modal
+  }
+  const validateField = (field, value) => {
+    let isValid = true
+
+    if (field === 'name') {
+      isValid = value.trim() !== ''
+      setIsFormValid(prev => ({ ...prev, name: isValid }))
+    } else if (field === 'description') {
+      isValid = value.trim() !== ''
+      setIsFormValid(prev => ({ ...prev, description: isValid }))
+    } else if (field === 'industryId') {
+      isValid = value.trim() !== ''
+      setIsFormValid(prev => ({ ...prev, industryId: isValid }))
+    } else if (field === 'functionId') {
+      isValid = value.trim() !== ''
+      setIsFormValid(prev => ({ ...prev, functionId: isValid }))
+    }
+  }
+  const validateForm = (data = formData) => {
+    const nameValid = data.name && data.name.trim() !== ''
+    const descriptionValid = data.description && data.description.trim() !== ''
+
+    const isValid = nameValid && descriptionValid
+
+    // Mark all fields as touched
+    setTouchedFields({
+      name: true,
+      description: true
+    })
+
+    // Update validation state
+    setIsFormValid({
+      name: nameValid,
+      description: descriptionValid
+    })
+
+    return isValid
+  }
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false) // Close the modal
+    setHtmlContent('') // Clear the HTML content
+  }
 
   const router = useRouter()
+  const reactQuillRef = useRef()
 
   const fetchAllNewsLists = async () => {
     setLoading(true)
     try {
-      const response = await getAllNews(page + 1, rowsPerPage) // Pass page (1-indexed) and rowsPerPage
+      const response = await getAllNews(page, 1000) // Pass page (1-indexed) and rowsPerPage
       if (response.status === 200) {
         setIndustriesLists(response.data.data)
+        setTotalItems(response.data.data.totalCount)
       }
     } catch (error) {
       console.error(error)
@@ -82,6 +213,22 @@ const MainPage = () => {
     }
   }
 
+  const handleTagChange = (index, value) => {
+    const updatedTags = [...formData.tags]
+    updatedTags[index] = value
+    setFormData(prevState => ({
+      ...prevState,
+      tags: updatedTags
+    }))
+  }
+  const handleRemoveTag = index => {
+    const updatedTags = formData.tags.filter((_, i) => i !== index)
+    setFormData(prevState => ({
+      ...prevState,
+      tags: updatedTags
+    }))
+  }
+
   useEffect(() => {
     fetchAllNewsLists()
   }, [page, rowsPerPage])
@@ -89,7 +236,19 @@ const MainPage = () => {
   // Handle input changes for name, description, and details
   const handleInputChange = e => {
     const { name, value } = e.target
-    setFormData(prevState => ({ ...prevState, [name]: value }))
+    setTouchedFields(prev => ({
+      ...prev,
+      [name]: true
+    }))
+
+    setFormData(prevState => {
+      const updatedFormData = { ...prevState, [name]: value }
+
+      // Only validate the touched field
+      validateField(name, updatedFormData[name])
+
+      return updatedFormData
+    })
   }
 
   const handleCheckboxChange = e => {
@@ -102,55 +261,47 @@ const MainPage = () => {
   }
 
   // Validation for name and description
-  const validateForm = () => {
-    const nameValid = formData.name.trim() !== ''
-    const descriptionValid = formData.description.trim() !== ''
-    setIsFormValid({
-      name: nameValid,
-      description: descriptionValid
-    })
-    return nameValid && descriptionValid
-  }
 
   // Handle Save button click
-  const handleSave = async () => {
-    if (validateForm()) {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        content: formData.details
-      }
+  // const handleSave = async () => {
+  //   if (validateForm()) {
+  //     const payload = {
+  //       name: formData.name,
+  //       description: formData.description,
+  //       content: formData.details,
 
-      try {
-        const response = await createNew(payload)
+  //       tags: formData.tags
+  //     }
 
-        if (response.status === 200) {
-          // Reset form and close modal if successful
-          setFormData({
-            name: '',
-            description: '',
-            details: '',
-            isImportant: false
-          })
-          setOpenModal(false)
-          toast.success(response.data.message)
-          fetchAllFunctionLists() // Refresh the industry list
-        } else {
-        }
-      } catch (error) {
-        console.error(error)
-        toast.error(error.message)
-      }
-    }
-  }
+  //     try {
+  //       const response = await createNew(payload)
+
+  //       if (response.status === 200) {
+  //         // Reset form and close modal if successful
+  //         setFormData({
+  //           name: '',
+  //           description: '',
+  //           details: '',
+  //           tags: []
+  //         })
+  //         setOpenModal(false)
+  //         toast.success(response.data.message)
+  //         fetchAllFunctionLists() // Refresh the industry list
+  //       } else {
+  //       }
+  //     } catch (error) {
+  //       console.error(error)
+  //       toast.error(error.message)
+  //     }
+  //   }
+  // }
 
   // Handle Reset button click
   const handleReset = () => {
     setFormData({
       name: '',
       description: '',
-      details: '',
-      isImportant: false
+      details: ''
     })
     setEditingIndex(null)
   }
@@ -161,12 +312,29 @@ const MainPage = () => {
   }
 
   // Handle opening and closing the modal
-  const handleOpenModal = (index = null) => {
-    if (index !== null) {
-      setEditingIndex(index)
-      setFormData({ ...industries[index] }) // Load existing industry data into the form
+  const handleOpenModal = (industry = null) => {
+    if (industry) {
+      console.log('Industry', industry)
+      // Prefill the form data with the existing industry data for editing
+      setFormData({
+        name: industry.name,
+        description: industry.description,
+        details: industry.content || '', // If 'details' exist, otherwise set it as empty
+        // isImportant: industry.isImportant || false
+        tags: industry.tags || [] //
+      })
+      setEditingIndex(industry._id) // Save the index or ID to track which industry is being edited
+    } else {
+      // If no industry is passed, this means it's for adding a new industry, so reset the form
+      setFormData({
+        name: '',
+        description: '',
+        details: '',
+        isImportant: false
+      })
+      setEditingIndex(null) // Reset editing index when adding a new industry
     }
-    setOpenModal(true)
+    setOpenModal(true) // Open the modal
   }
 
   const handleCloseModal = () => {
@@ -174,26 +342,31 @@ const MainPage = () => {
   }
 
   // Handle Delete Industry
-  const handleDelete = index => {
-    setDeleteIndex(index)
+  const handleDelete = industry => {
+    setDeleteIndex(industry._id)
     setDeleteConfirmOpen(true) // Open confirmation dialog before delete
   }
 
-  const confirmDelete = () => {
-    const updatedIndustries = industries.filter((_, i) => i !== deleteIndex)
-    setIndustries(updatedIndustries)
-    setDeleteConfirmOpen(false) // Close confirmation dialog
-    setDeleteIndex(null)
+  const confirmDelete = async () => {
+    const payload = {
+      _id: deleteIndex
+    }
+    try {
+      const response = await deleteNews(payload)
+      if (response.status === 200) {
+        toast.success(response.data.message)
+        setDeleteConfirmOpen(false)
+        fetchAllNewsLists()
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error(error.message)
+    }
   }
 
   const cancelDelete = () => {
     setDeleteConfirmOpen(false) // Close confirmation dialog
     setDeleteIndex(null)
-  }
-
-  // Handle pagination change
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage)
   }
 
   // Handle rows per page change
@@ -213,9 +386,86 @@ const MainPage = () => {
     setViewOptionsModalOpen(false)
     setSelectedQuestion(null)
   }
+  // Add a tag to the list
+  const handleAddTag = () => {
+    setFormData(prevState => ({
+      ...prevState,
+      tags: Array.isArray(prevState.tags) ? [...prevState.tags, ''] : [''] // Ensure tags is an array
+    }))
+  }
+
+  const handleSave = async () => {
+    if (validateForm()) {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        content: formData.details,
+        tags: formData.tags
+      }
+
+      try {
+        let response
+        if (editingIndex) {
+          const editedPayload = {
+            _id: editingIndex,
+            name: formData.name,
+            description: formData.description,
+            content: formData.details,
+            tags: formData.tags
+          }
+          // If we are editing, call the editIndustry API
+          response = await updateNews(editedPayload)
+        } else {
+          // If we are creating a new industry, call createIndustry API
+          response = await createNew(payload)
+        }
+
+        if (response.status === 200) {
+          // Reset form and close modal if successful
+          setFormData({
+            name: '',
+            description: '',
+            details: '',
+            isImportant: false
+          })
+          setOpenModal(false)
+          toast.success(response.data.message)
+          fetchAllNewsLists() // Refresh the industry list
+        } else {
+          // Handle unsuccessful response
+          toast.error(response.data.message || 'Something went wrong')
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }
+  const imageHandler = useCallback(() => {
+    const input = document.createElement('input')
+    input.setAttribute('type', 'file')
+    input.setAttribute('accept', 'image/*')
+    input.click()
+    input.onchange = async () => {
+      if (input !== null && input.files !== null) {
+        const file = input.files[0]
+        console.log('ff', file)
+        const response = await uploadFile({ file: file })
+        const url = response.data.data.fileUrl
+        const quill = reactQuillRef.current
+        if (quill) {
+          const range = quill.getEditorSelection()
+          range && quill.getEditor().insertEmbed(range.index, 'image', url)
+        }
+      }
+    }
+  }, [])
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage)
+  }
 
   return (
     <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+      <TableContainer />
       {loading && (
         <LinearProgress
           sx={{
@@ -251,63 +501,122 @@ const MainPage = () => {
               color: 'white',
               '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
             }}
+            disabled={!permissions?.create}
           >
             Add News
           </Button>
         }
       />
+      <Box sx={{ paddingBottom: 6 }}>
+        <DebouncedInput
+          value={globalFilter ?? ''}
+          onChange={value => setGlobalFilter(String(value))}
+          placeholder='Search News'
+        />
+      </Box>
 
       {/* Industry List Table */}
       <TableContainer component={Paper} sx={{ marginTop: 4 }}>
         <Table>
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor: '#E0E0E0,',
+                '&:hover': {
+                  backgroundColor: '#E0E0E0',
+                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                  cursor: 'pointer',
+                  '& td': {
+                    transform: 'scale(0.95)',
+                    transition: 'transform 0.3s ease'
+                  }
+                }
+              }}
+            >
               <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
               <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
+              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Details</TableCell>
               <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {industryLists.map((industry, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Tooltip title={industry.name.length > 20 ? industry.name : ''}>
-                    <span>{industry.name.length > 20 ? `${industry.name.substring(0, 20)}...` : industry.name}</span>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <Tooltip title={industry.description.length > 20 ? industry.description : ''}>
-                    <span>
-                      {industry.description.length > 20
-                        ? `${industry.description.substring(0, 20)}...`
-                        : industry.description}
-                    </span>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <IconButton color='primary' onClick={() => handleOpenModal(index)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton color='secondary' onClick={() => handleDelete(index)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {industryLists?.data
+              ?.filter(news => news?.name?.toLowerCase().includes(globalFilter.toLowerCase()))
+              .map((industry, index) => (
+                <TableRow
+                  key={index}
+                  sx={{
+                    backgroundColor: '#E0E0E0,',
+                    '&:hover': {
+                      backgroundColor: '#E0E0E0',
+                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                      cursor: 'pointer',
+                      '& td': {
+                        transform: 'scale(0.95)',
+                        transition: 'transform 0.3s ease'
+                      }
+                    }
+                  }}
+                >
+                  <TableCell>
+                    <Tooltip title={industry.name.length > 20 ? industry.name : ''}>
+                      <span>{industry.name.length > 20 ? `${industry.name.substring(0, 20)}...` : industry.name}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title={industry.description.length > 20 ? industry.description : ''}>
+                      <span>
+                        {industry.description.length > 20
+                          ? `${industry.description.substring(0, 20)}...`
+                          : industry.description}
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant='outlined'
+                      sx={{
+                        background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                        color: 'white',
+                        '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+                      }}
+                      onClick={() => handleViewDetails(industry)}
+                    >
+                      View Details
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton disabled={!permissions?.edit} color='secondary' onClick={() => handleDelete(industry)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Pagination Controls */}
+
       <Box sx={{ marginTop: 3 }}>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component='div'
-          count={industryLists.length}
+        <Pagination
+          count={Math.ceil(totalItems / rowsPerPage)}
           page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+          onChange={handleChangePage}
+          // color='primary'
+
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: 2,
+            '& .Mui-selected': {
+              backgroundColor: 'green', // Green background for selected page
+              color: 'green' // White text for selected page
+            }
+          }}
         />
       </Box>
 
@@ -338,8 +647,8 @@ const MainPage = () => {
               onChange={handleInputChange}
               fullWidth
               margin='normal'
-              error={!isFormValid.name}
-              helperText={!isFormValid.name ? 'Name is required' : ''}
+              error={touchedFields.name && !isFormValid.name} // Show error only if touched
+              helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''}
             />
             {/* Industry Description Input */}
             <TextField
@@ -351,36 +660,76 @@ const MainPage = () => {
               margin='normal'
               multiline
               rows={4}
-              error={!isFormValid.description}
-              helperText={!isFormValid.description ? 'Description is required' : ''}
+              error={touchedFields.name && !isFormValid.name} // Show error only if touched
+              helperText={touchedFields.name && !isFormValid.description ? 'Description is required' : ''}
             />
-            {/* Checkbox for Important */}
             <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox checked={formData.isImportant} onChange={handleCheckboxChange} />}
-                label='Mark as Important'
-              />
+              <Button onClick={handleAddTag} variant='outlined'>
+                Add Tag
+              </Button>
+              {formData?.tags?.map((tag, index) => (
+                <Box key={index} sx={{ marginTop: 2, display: 'flex', alignItems: 'center' }}>
+                  <TextField
+                    label={`Tag ${index + 1}`}
+                    name={`tag-${index}`}
+                    value={tag}
+                    onChange={e => handleTagChange(index, e.target.value)}
+                    fullWidth
+                    margin='normal'
+                  />
+                  <IconButton onClick={() => handleRemoveTag(index)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
             </Grid>
+
             {/* React Quill Editor for Details */}
             <Grid item xs={12}>
               <Box sx={{ marginTop: 2 }}>
                 <h4>Add Details (optional)</h4>
                 <ReactQuill
-                  value={formData.details}
-                  onChange={handleDetailsChange}
+                  ref={reactQuillRef}
+                  theme='snow'
+                  placeholder='Start writing...'
                   modules={{
-                    toolbar: [
-                      [{ header: '1' }, { header: '2' }, { font: [] }],
-                      [{ list: 'ordered' }, { list: 'bullet' }],
-                      ['bold', 'italic', 'underline'],
-                      ['link'],
-                      ['blockquote'],
-                      [{ align: [] }],
-                      ['image', 'video'],
-                      ['clean']
-                    ]
+                    toolbar: {
+                      container: [
+                        [{ header: '1' }, { header: '2' }, { font: [] }],
+                        [{ size: [] }],
+                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                        [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+                        ['link', 'image', 'video'],
+                        ['code-block'],
+                        ['clean']
+                      ],
+                      handlers: {
+                        image: imageHandler
+                      }
+                    },
+                    clipboard: {
+                      matchVisual: false
+                    }
                   }}
-                  style={{ minHeight: '200px', maxHeight: '400px', overflow: 'auto' }}
+                  formats={[
+                    'header',
+                    'font',
+                    'size',
+                    'bold',
+                    'italic',
+                    'underline',
+                    'strike',
+                    'blockquote',
+                    'list',
+                    'bullet',
+                    'indent',
+                    'link',
+                    'image',
+                    'video',
+                    'code-block'
+                  ]}
+                  value={formData.details}
+                  onChange={value => setFormData({ ...formData, details: value })}
                 />
               </Box>
             </Grid>
@@ -404,8 +753,81 @@ const MainPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={viewModalOpen} onClose={handleCloseViewModal} fullWidth maxWidth='md'>
+        <DialogTitle>Industry Details</DialogTitle>
+        <DialogContent>
+          <Card
+            sx={{
+              border: '1px solid #ddd',
+              borderRadius: '12px',
+              boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden',
+              marginBottom: 2
+            }}
+          >
+            {/* Display the image */}
+            <CardMedia
+              component='img'
+              image={
+                htmlContent?.match(/<img.*?src="(.*?)"/)?.[1] || // Extract the first image URL from HTML
+                'https://via.placeholder.com/400' // Fallback image
+              }
+              alt='Industry Image'
+              sx={{
+                height: 200,
+                objectFit: 'contain', // Ensure the image is fully visible
+                backgroundColor: '#f5f5f5' // Optional: Add a background color for contrast
+              }}
+            />
+
+            {/* Display the details */}
+            <CardContent>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: htmlContent?.replace(/<img.*?>/, '') // Remove the image from the HTML content
+                }}
+                style={{
+                  fontFamily: 'Arial, sans-serif',
+                  lineHeight: '1.6',
+                  color: '#333'
+                }}
+              />
+            </CardContent>
+          </Card>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseViewModal} color='secondary' variant='contained'>
+            Close
+          </Button>
+          <Button
+            // color='primary'
+            sx={{
+              background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+              color: 'white',
+              '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+            }}
+            variant='contained'
+            onClick={() => {
+              setOpenModal(true), setViewModalOpen(false)
+            }}
+            disabled={!permissions.edit}
+          >
+            Edit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
 
-export default MainPage
+// export default MainPage
+const ProtectedChatPage = () => {
+  return (
+    <ProtectedRoute requiredPermission='News'>
+      <MainPage />
+    </ProtectedRoute>
+  )
+}
+
+export default ProtectedChatPage

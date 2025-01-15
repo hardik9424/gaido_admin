@@ -61,6 +61,8 @@ import { getusers, blockUser, unblockUser, updatePawPoints, appUserList } from '
 
 import 'react-toastify/dist/ReactToastify.css'
 
+import ProtectedRoutes from '@/components/ProtectedRoute'
+
 import Unauthorized from '../../../../../Unauthorized'
 
 const UserListTable = () => {
@@ -82,7 +84,7 @@ const UserListTable = () => {
   const [selectedUserId, setSelectedUserId] = useState('')
 
   // Animated Placeholder Data
-  const [animateData] = useState(['Search users', 'Search content', 'Search posts'])
+  const [animateData] = useState(['Search Users', 'Search Qualification', 'Search Course'])
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const [editingUser, setEditingUser] = useState(null) // Store the user being edited
@@ -220,14 +222,16 @@ const UserListTable = () => {
     fetchAllUsers()
   }, [])
   const globalFilterFn = (row, _, filterValue) => {
-    const { name, email, phone } = row.original || {}
+    const { name, email, phone, course, stream } = row.original || {}
     const searchTerm = filterValue.toLowerCase() // Convert filterValue to lowercase for case-insensitive search
 
     // Safely check if the fields exist and convert them to lowercase if they do, otherwise use an empty string
     return (
       (name ? name.toLowerCase() : '').includes(searchTerm) ||
       (email ? email.toLowerCase() : '').includes(searchTerm) ||
-      (phone ? phone.toLowerCase() : '').includes(searchTerm)
+      (phone ? phone.toLowerCase() : '').includes(searchTerm) ||
+      (course ? course.toLowerCase() : '').includes(searchTerm) ||
+      (stream ? stream.toLowerCase() : '').includes(searchTerm)
     )
   }
 
@@ -358,7 +362,42 @@ const UserListTable = () => {
           </Tooltip>
         )
       },
-
+      {
+        header: 'Course',
+        accessorKey: 'couse',
+        cell: ({ row }) => (
+          <Tooltip title={row?.original?.course || 'N/A'}>
+            <Typography>{truncateText(row.original.course)}</Typography>
+          </Tooltip>
+        )
+      },
+      {
+        header: 'Stream',
+        accessorKey: 'stream',
+        cell: ({ row }) => (
+          <Tooltip title={row?.original?.stream || 'N/A'}>
+            <Typography>{truncateText(row.original.stream)}</Typography>
+          </Tooltip>
+        )
+      },
+      {
+        header: 'Qualification',
+        accessorKey: 'qualification',
+        cell: ({ row }) => (
+          <Tooltip title={row?.original?.qualification || 'N/A'}>
+            <Typography>{truncateText(row.original.qualification)}</Typography>
+          </Tooltip>
+        )
+      },
+      {
+        header: 'City',
+        accessorKey: 'city',
+        cell: ({ row }) => (
+          <Tooltip title={row?.original?.city || 'N/A'}>
+            <Typography>{truncateText(row.original.city)}</Typography>
+          </Tooltip>
+        )
+      }
       // {
       //   header: 'Active',
       //   accessorKey: 'active',
@@ -374,20 +413,20 @@ const UserListTable = () => {
       //     </Button>
       //   )
       // },
-      {
-        header: 'Actions',
-        accessorKey: 'actions',
-        cell: ({ row }) => (
-          <IconButton
-            // disabled={userRole !== 'superadmin' && userRole !== 'admin'}
-            onClick={() => handleOpenPawPointsModal(row.original)}
-            color='primary'
-            aria-label='edit paw points'
-          >
-            <EditIcon />
-          </IconButton>
-        )
-      }
+      // {
+      //   header: 'Actions',
+      //   accessorKey: 'actions',
+      //   cell: ({ row }) => (
+      //     <IconButton
+      //       // disabled={userRole !== 'superadmin' && userRole !== 'admin'}
+      //       onClick={() => handleOpenPawPointsModal(row.original)}
+      //       color='primary'
+      //       aria-label='edit paw points'
+      //     >
+      //       <EditIcon />
+      //     </IconButton>
+      //   )
+      // }
     ],
     [editingPawPoints, userRole]
   )
@@ -763,4 +802,13 @@ const UserListTable = () => {
   )
 }
 
-export default UserListTable
+// export default UserListTable
+const ProtectedChatPage = () => {
+  return (
+    <ProtectedRoutes requiredPermission='Users'>
+      <UserListTable />
+    </ProtectedRoutes>
+  )
+}
+
+export default ProtectedChatPage

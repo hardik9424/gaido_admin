@@ -87,31 +87,22 @@ const UserDropdown = () => {
   //   }
   // }
   const handleUserLogout = () => {
-    try {
-      // Clear token and user data from local storage/session storage
-      localStorage.removeItem('userData')
-      localStorage.removeItem('userDetails')
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('token')
-      localStorage.removeItem('role')
+    document.cookie = 'token=; path=/; expires=' + new Date(0).toUTCString()
 
-      // Sign out from the app
-      // await signOut({ redirect: false });
+    // Clear token and user data from local storage/session storage
+    localStorage.removeItem('userData')
+    localStorage.removeItem('userDetails')
+    localStorage.removeItem('token')
+    sessionStorage.removeItem('token')
+    localStorage.removeItem('role')
+    localStorage.removeItem('user')
+    localStorage.removeItem('permissions')
 
-      // Redirect to login page
-      router.push('/login')
-    } catch (error) {
-      console.error(error)
+    // Sign out from the app
+    // await signOut({ redirect: false });
 
-      // Show error in a toast or similar notification
-      // toastService.error(error.message);
-    } finally {
-      localStorage.removeItem('userData')
-      localStorage.removeItem('userDetails')
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('token')
-      localStorage.removeItem('role')
-    }
+    // Redirect to login page
+    router.push('/login')
   }
 
   useEffect(() => {

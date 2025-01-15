@@ -145,31 +145,22 @@ const UserListCards = ({ data }) => {
       subTitle: 'Total Users'
     },
     {
-      title: 'Highest Paw Points',
-      value: <CountUp start={0} end={dataMap.highestPawpoints?.pawPoints || 0} />,
+      title: 'Total Courses',
+      value: <CountUp start={0} end={dataMap?.totalCourses || 0} />,
       avatarIcon: 'tabler-user-plus',
       avatarColor: 'error',
       change: 'positive',
       changeNumber: '18%',
-      subTitle: 'User with Highest Paw Points'
+      subTitle: 'Highest User in Course'
     },
     {
-      title: 'Highest Pets',
-      value: <CountUp start={0} end={dataMap.highestPets?.petCount || 0} />,
+      title: 'Total Streams',
+      value: <CountUp start={0} end={dataMap?.totalStreams || 0} />,
       avatarIcon: 'tabler-user-check',
       avatarColor: 'success',
       change: 'negative',
       changeNumber: '14%',
-      subTitle: 'User with Highest Pets'
-    },
-    {
-      title: 'Blocked Users',
-      value: <CountUp start={0} end={dataMap.blockedUsers || 0} />,
-      avatarIcon: 'tabler-user-search',
-      avatarColor: 'warning',
-      change: 'positive',
-      changeNumber: '42%',
-      subTitle: 'Blocked Users'
+      subTitle: 'Highest User in Stream'
     }
   ]
 

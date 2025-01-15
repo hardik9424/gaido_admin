@@ -1,7 +1,14 @@
 import axios from '../../utils/axios'
 
 //AUTH
-export const loginAdminUser = data => axios('/admin/auth/login', 'POST', data)
+export const verifyUser = data => axios('admin/auth/verifyadmin', 'POST', data)
+export const loginAdminUser = data => axios('admin/auth/login', 'POST', data)
+export const adminDetails = data => axios('admin/auth/admiindetails', 'POST', data)
+
+//api to get analytics
+export const getUserAnalytics = data => axios('admin/auth/useranalytics', 'GET', data)
+
+export const uploadFile = data => axios('admin/auth/file/upload', 'POST', data, true)
 
 // get admin user lists
 export const getAllAdminsUsers = data => axios('admin/auth/adminuserlists', 'GET', data)
@@ -19,20 +26,32 @@ export const getAllPermissions = data => axios('admin/auth/getpermissions', 'GET
 
 // api to create role
 export const createRole = data => axios('admin/auth/createrole', 'POST', data)
+export const deleteRole = data => axios('admin/auth/deleterole', 'DELETE', data)
+export const deleteAdminRole = data => axios('admin/auth/roleadmin', 'DELETE', data)
+// api to update admin role only
+export const updateRole = data => axios('admin/auth/roleupdate', 'PUT', data)
 //a pi to get roles
 export const getAllRoles = data => axios('admin/auth/getroles', 'GET', data)
 // api to edit roles
 export const editRoles = data => axios('admin/auth/adminuser/role/update', 'PUT', data)
 
 // api to get all industry lists
-export const getIndustryList = (page, limit) => axios(`admin/auth/industrylists?page=${page}&limit=${limit}`, 'GET')
+export const getIndustryList = (page, limit, globalFilter) =>
+  axios(`admin/auth/industrylists?page=${page}&limit=${limit}$&search=${globalFilter}`, 'GET')
+// export const getIndustryList = (page, limit, search = '') => {
+//   const searchQuery = search ? `&search=${encodeURIComponent(search)}` : '' // Add search term if provided
+//   return axios(`admin/auth/industrylists?page=${page}&limit=${limit}${searchQuery}`, 'GET')
+// }
 
 // api to get functions
-export const getFunctions = (page, limit) => axios(`admin/auth/getallfunctions?page=${page}&limit=${limit}`, 'GET')
+export const getFunctions = (page, limit, globalFilter) =>
+  axios(`admin/auth/getallfunctions?page=${page}&limit=${limit}&search=${globalFilter}`, 'GET')
 
 // api to get all jobs roles
 export const getJobRoles = (page, limit) => axios(`admin/auth/getalljobs?page=${page}&limit=${limit}`, 'GET')
 export const createJobRoles = data => axios('admin/auth/createjobrole', 'POST', data)
+export const deleteJobRoles = data => axios('admin/auth/deletejobrole', 'DELETE', data)
+export const updateJobRoles = data => axios('admin/auth/updatejobrole', 'PUT', data)
 
 // api to create industry
 export const createIndustry = data => axios('admin/auth/createindustry', 'POST', data)
@@ -65,3 +84,5 @@ export const getSettings = data => axios('admin/auth/settings', 'GET', data)
 
 // api to create new
 export const createNew = data => axios('admin/auth/createnews', 'POST', data)
+export const updateNews = data => axios('admin/auth/updatenews', 'PUT', data)
+export const deleteNews = data => axios('admin/auth/deletenews', 'DELETE', data)

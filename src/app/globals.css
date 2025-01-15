@@ -298,3 +298,11 @@ code {
 .table tr:hover td {
   background-color: #f5f5f5; /* Hover effect for table rows */
 }
+
+
+.ql-editor img {
+  max-width: 100%; /* Ensure the image does not exceed the container's width */
+  height: auto;    /* Maintain aspect ratio */
+  max-height: 300px; /* Optional: limit the height */
+  margin: 10px 0;  /* Add spacing around the image */
+}

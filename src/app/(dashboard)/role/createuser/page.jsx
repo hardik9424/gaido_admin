@@ -37,7 +37,14 @@ import { ToastContainer, toast } from 'react-toastify'
 import { useTheme } from '@mui/material/styles'
 
 import 'react-toastify/dist/ReactToastify.css'
-import { getAllRoles, getAllAdminsUsers, createAdminUser, deleteAdminUser, editAdminUserDetails } from '@/app/api'
+import {
+  getAllRoles,
+  getAllAdminsUsers,
+  createAdminUser,
+  deleteAdminUser,
+  editAdminUserDetails,
+  updateRole
+} from '@/app/api'
 
 const AdminUserTable = () => {
   const theme = useTheme()
@@ -57,6 +64,7 @@ const AdminUserTable = () => {
   const [editedRole, setEditedRole] = useState('')
   const [editUserDetailsDialogOpen, setEditUserDetailsDialogOpen] = useState(false)
   const [userRole, setUserRole] = useState('')
+  const [changeUserRole, setChangeUserRole] = useState('')
   const [userDetailsToEdit, setUserDetailsToEdit] = useState({
     firstName: '',
     lastName: '',
@@ -155,8 +163,8 @@ const AdminUserTable = () => {
       firstName,
       lastName,
       email: user.email,
-      mobile: user.mobileNumber,
-      password: user.password
+      mobile: user.mobileNumber
+      // password: user.password
     })
     setEditUserDetailsDialogOpen(true)
   }
@@ -239,10 +247,12 @@ const AdminUserTable = () => {
     setLoading(true)
     try {
       const payload = {
-        roleIds: editFormValues.role
+        adminUserId: userIdToEdit,
+        roleId: editFormValues.role
       }
+      console.log('payload', payload)
 
-      await editUser(userIdToEdit, payload) // Call the editUser API
+      await updateRole(payload) // Call the editUser API
       toast.success('Admin user role updated successfully')
       fetchAdminUsers()
       setEditDialogOpen(false) // Close dialog on success
@@ -575,8 +585,7 @@ const AdminUserTable = () => {
               <TextField
                 fullWidth
                 margin='normal'
-                label='Password'
-                value={userDetailsToEdit.password}
+                // value={userDetailsToEdit.password}
                 onChange={e => setUserDetailsToEdit({ ...userDetailsToEdit, password: e.target.value })}
                 placeholder='**********'
                 type={passwordVisible ? 'text' : 'password'}

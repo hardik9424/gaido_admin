@@ -69,7 +69,7 @@ const AccountDetails = () => {
   useEffect(() => {
     const userDetails = localStorage.getItem('user')
     if (userDetails) {
-      const parsedDetails = JSON.parse(user)
+      const parsedDetails = JSON.parse(userDetails)
       setAdminDetails(parsedDetails)
       setLoading(false)
     } else {
@@ -110,6 +110,13 @@ const AccountDetails = () => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const formatUserName = (data = '') => {
+    const nameParts = data.split(' ')
+    const firstName = nameParts[0] || '' // First word as the first name
+    const lastName = nameParts.slice(1).join(' ') // Concatenate the rest as the last name
+    return { firstName, lastName }
+  }
+
   return (
     <Card>
       <CardContent>
@@ -119,7 +126,7 @@ const AccountDetails = () => {
               <CustomTextField
                 fullWidth
                 label='First Name'
-                value={formData.firstName}
+                value={formatUserName(adminDetails?.name).firstName}
                 onChange={e => handleFormChange('firstName', e.target.value)}
               />
             </Grid>
@@ -127,7 +134,7 @@ const AccountDetails = () => {
               <CustomTextField
                 fullWidth
                 label='Last Name'
-                value={formData.lastName}
+                value={formatUserName(adminDetails?.name).lastName}
                 onChange={e => handleFormChange('lastName', e.target.value)}
               />
             </Grid>
@@ -135,7 +142,7 @@ const AccountDetails = () => {
               <CustomTextField
                 fullWidth
                 label='Email'
-                value={formData.email}
+                value={adminDetails?.email}
                 onChange={e => handleFormChange('email', e.target.value)}
               />
             </Grid>
@@ -143,7 +150,7 @@ const AccountDetails = () => {
               <CustomTextField
                 fullWidth
                 label='Phone Number'
-                value={formData.phoneNumber}
+                value={adminDetails?.mobile}
                 onChange={e => handleFormChange('phoneNumber', e.target.value)}
               />
             </Grid>

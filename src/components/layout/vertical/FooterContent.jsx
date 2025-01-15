@@ -32,9 +32,9 @@ const FooterContent = () => {
         <span className='text-textSecondary'>{`© ${new Date().getFullYear()}, Made  `}</span>
 
         <span className='text-textSecondary'>{` by `}</span>
-        <Link href='https://www.apploretechnologies.com/' target='_blank' className='text-primary uppercase'>
-          Paw Parents India Pvt Ltd
-        </Link>
+        <span href='https://www.apploretechnologies.com/' target='_blank' className='text-primary uppercase'>
+          Gaido
+        </span>
       </p>
       {!isBreakpointReached && (
         <div className='flex items-center gap-4'>

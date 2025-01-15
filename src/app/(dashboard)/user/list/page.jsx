@@ -6,6 +6,7 @@ import { CircularProgress, Box } from '@mui/material'
 
 import UserList from '@views/apps/user/list'
 import { getUserAnalytics } from '@/app/api'
+import ProtectedRoutes from '@/components/ProtectedRoute'
 
 const UserListApp = () => {
   const [loading, setLoading] = useState(false)
@@ -14,8 +15,9 @@ const UserListApp = () => {
   const fetchAnalytics = async () => {
     try {
       const response = await getUserAnalytics()
+      console.log('user', response.data.data)
       if (response.status === 200) {
-        const dataArray = Object.entries(response.data).map(([key, value]) => ({
+        const dataArray = Object.entries(response.data.data).map(([key, value]) => ({
           label: key,
           data: value
         }))
@@ -57,4 +59,14 @@ const UserListApp = () => {
   return <UserList userData={userData} />
 }
 
-export default UserListApp
+// export default UserListApp
+const ProtectedChatPage = () => {
+  return (
+    <ProtectedRoutes requiredPermission='Users'>
+      <UserListApp />
+    </ProtectedRoutes>
+  )
+}
+
+export default ProtectedChatPage
+

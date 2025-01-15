@@ -64,7 +64,7 @@ const Logo = () => {
   return (
     <Link href='/home' className='flex items-center'>
       {/* <VuexyLogo className='text-2xl text-primary' />\ */}
-      <img src='/images/loader/gaido_vector.png' alt='' style={{ height: '45px', width: '45px' }} />
+      {/* <img src='/images/loader/gaido_vector.png' alt='' style={{ height: '45px', width: '45px' }} /> */}
       <LogoText
         ref={logoTextRef}
         isHovered={isHovered}

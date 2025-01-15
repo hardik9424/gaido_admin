@@ -195,51 +195,20 @@
 
 'use client'
 
+import { useState, useEffect } from 'react'
+
 // MUI Imports
 import { useTheme } from '@mui/material/styles'
 import {
   Person,
-  Dashboard,
-  Groups,
-  EventAvailable,
   AccountBalance,
-  CardMembership,
-  PostAdd,
-  Pets,
-  LocalHospital,
-  MedicalServices,
-  Inventory,
-  Settings,
-  LocalOffer,
-  ShoppingCart,
-  Wallpaper,
-  NotificationsActive,
-  Category,
-  AdminPanelSettings,
-  Create,
-  Shop,
-  OutboundRounded,
-  DeliveryDining,
-  FoodBank,
-  Shop2Sharp,
-  VerifiedUserRounded,
-  RollerShades,
-  AdminPanelSettingsTwoTone,
-  AdminPanelSettingsSharp,
-  RollerShadesClosedTwoTone,
-  Verified,
-  OtherHouses,
-  House,
-  Collections,
-  ManageHistorySharp,
-  TempleBuddhist,
-  Report,
-  BrandingWatermark,
+  FactoryOutlined,
   Functions,
   WorkHistory,
-  FactoryOutlined,
   Policy,
-  TerminalSharp
+  TerminalSharp,
+  AdminPanelSettingsTwoTone,
+  VerifiedUserRounded
 } from '@mui/icons-material'
 
 // Third-party Imports
@@ -278,25 +247,10 @@ const VerticalMenu = ({ scrollMenu }) => {
 
   // Map all pages to menu items
   const permissionMap = {
-    // Dashboard: { href: '/home', icon: <Dashboard />, label: 'Dashboard' },
-    // 'Create Membership': { href: '/category', icon: <Category />, label: 'Membership' },
-    User: { href: '/user/list', icon: <Person />, label: 'Users' },
-    // Community: { href: '/community', icon: <Groups />, label: 'Community' },
-    // pawmanagment: {
-    //   icon: <ManageHistorySharp />,
-    //   label: 'Pets Management',
-    //   children: [
-    //     { href: '/pawmanagment', icon: <Pets />, label: 'Pets' },
-    //     { href: '/temperament', icon: <TempleBuddhist />, label: 'Temperament' },
-    //     { href: '/disease', icon: <TempleBuddhist />, label: 'Disease' }
-    //   ]
-    // },
-    // 'Report User': { href: '/reportuser', icon: <Settings />, label: 'Report User' },
-    // Settings: { href: '/settings', icon: <Settings />, label: 'Settings' },
-    // Coupons: { href: '/coupons', icon: <LocalOffer />, label: 'Coupons' },
-    Accounts: {
+    Users: { href: '/user/list', icon: <Person />, label: 'Users' },
+    Admin: {
       icon: <AccountBalance />,
-      label: 'Accounts',
+      label: 'Admin',
       children: [
         { href: '/role/newrole', label: 'Create Role', icon: <AdminPanelSettingsTwoTone /> },
         { href: '/role/createuser', label: 'Create User', icon: <VerifiedUserRounded /> }
@@ -322,7 +276,6 @@ const VerticalMenu = ({ scrollMenu }) => {
       label: 'News',
       href: '/news'
     },
-
     'Privacy Policy': {
       icon: <Policy />,
       label: 'Privacy Policy',
@@ -333,32 +286,14 @@ const VerticalMenu = ({ scrollMenu }) => {
       label: 'Terms & Condition',
       href: '/termsandconditions'
     }
-    // shop: {
-    //   icon: <ShoppingCart />,
-    //   label: 'Shop Management',
-    //   children: [
-    //     { href: '/shop', label: 'Shop', icon: <Shop2Sharp /> },
-    //     { href: '/orders', label: 'Orders', icon: <DeliveryDining /> },
-    //     { href: '/collections', label: 'Collections', icon: <FoodBank /> },
-    //     { href: '/brands', label: 'Brands', icon: <BrandingWatermark /> }
-    //   ]
-    // },
-    // notification: { href: '/notification', icon: <NotificationsActive />, label: 'Notification' },
-    // banner: { href: '/banner', icon: <Wallpaper />, label: 'Banner' },
-    // hospital: { href: '/hospital', icon: <LocalHospital />, label: 'Hospital Profile' },
-    // vet: { href: '/vet', icon: <MedicalServices />, label: 'Vets Profile' },
-    // 'Payments Management': { href: '/subcategory', icon: <Create />, label: 'Payments Management' },
-    // Appointments: {
-    //   icon: <Create />,
-    //   label: 'Appointments',
-    //   children: [
-    //     { href: '/appointments/clinic', label: 'Clinic', icon: <OtherHouses /> },
-    //     { href: '/appointments/house', label: 'In-house', icon: <House /> },
-    //     { href: '/package', icon: <Collections />, label: 'Package' }
-    //   ]
-    // },
-    // reports: { href: '/reportuser', label: 'Reports', icon: <Report /> }
   }
+
+  // Get permissions from localStorage
+  const [permissions, setPermissions] = useState([])
+  useEffect(() => {
+    const savedPermissions = JSON.parse(localStorage.getItem('permissions')) || []
+    setPermissions(savedPermissions)
+  }, [])
 
   return (
     <ScrollWrapper
@@ -379,24 +314,28 @@ const VerticalMenu = ({ scrollMenu }) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        {Object.entries(permissionMap).map(([key, menuItem]) => {
-          if (menuItem.children) {
+        {permissions?.map(permission => {
+          const menuItem = permissionMap[permission.name] // Match only by the 'name' field
+          if (menuItem) {
+            if (menuItem.children) {
+              return (
+                <SubMenu key={permission.name} label={menuItem.label} icon={menuItem.icon}>
+                  {menuItem.children.map(child => (
+                    <MenuItem key={child.href} href={child.href} icon={child.icon}>
+                      {child.label}
+                    </MenuItem>
+                  ))}
+                </SubMenu>
+              )
+            }
+
             return (
-              <SubMenu key={key} label={menuItem.label} icon={menuItem.icon}>
-                {menuItem.children.map(child => (
-                  <MenuItem key={child.href} href={child.href} icon={child.icon}>
-                    {child.label}
-                  </MenuItem>
-                ))}
-              </SubMenu>
+              <MenuItem key={permission.name} href={menuItem.href} icon={menuItem.icon}>
+                {menuItem.label}
+              </MenuItem>
             )
           }
-
-          return (
-            <MenuItem key={key} href={menuItem.href} icon={menuItem.icon}>
-              {menuItem.label}
-            </MenuItem>
-          )
+          return null
         })}
       </Menu>
     </ScrollWrapper>
