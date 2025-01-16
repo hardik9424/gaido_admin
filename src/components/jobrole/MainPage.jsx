@@ -107,6 +107,7 @@ const MainPage = () => {
   const [touchedFields, setTouchedFields] = useState({})
   const [permissions, setPermissions] = useState({ create: false, read: false, edit: false, delete: false })
   const [adminId, setAdminId] = useState('')
+  // const [alreadySe]
   const DebouncedInput = ({ value: initialValue, onChange, debounce = 700, ...props }) => {
     const [value, setValue] = useState(initialValue)
 
@@ -786,7 +787,7 @@ const MainPage = () => {
                 onClick={e => setOpenIndustriesMenu(e.currentTarget)}
                 sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
               >
-                {`Select Industries (${formData.industryIds.length})`}
+                {`Select Industries (${formData?.industryIds?.length})`}
               </Button>
               <Menu
                 anchorEl={openIndustriesMenu}
@@ -803,10 +804,10 @@ const MainPage = () => {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={formData.industryIds.length === industries?.industries?.length}
+                        checked={formData?.industryIds?.length === industries?.industries?.length}
                         indeterminate={
-                          formData.industryIds.length > 0 &&
-                          formData.industryIds.length < industries?.industries?.length
+                          formData?.industryIds?.length > 0 &&
+                          formData?.industryIds?.length < industries?.industries?.length
                         }
                         onChange={e => (e.target.checked ? handleSelectAll('industry') : handleDeselectAll('industry'))}
                       />
@@ -819,7 +820,7 @@ const MainPage = () => {
                     <FormControlLabel
                       control={
                         <Checkbox
-                          checked={formData.industryIds.includes(industry._id)}
+                          checked={formData?.industryIds?.includes(industry._id)}
                           onChange={() => handleCheckboxChange('industry', industry._id)}
                         />
                       }
@@ -829,7 +830,7 @@ const MainPage = () => {
                 ))}
               </Menu>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                {formData.industryIds.map(id => {
+                {formData?.industryIds?.map(id => {
                   const industry = industries?.industries?.find(ind => ind._id === id)
                   return (
                     <Chip
@@ -932,7 +933,7 @@ const MainPage = () => {
                 onClick={e => setOpenFunctionsMenu(e.currentTarget)}
                 sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
               >
-                {`Select Functions (${formData.functionIds.length})`}
+                {`Select Functions (${formData?.functionIds?.length})`}
               </Button>
               <Menu
                 anchorEl={openFunctionsMenu}
@@ -949,9 +950,9 @@ const MainPage = () => {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={formData.functionIds.length === functions?.data?.length}
+                        checked={formData?.functionIds?.length === functions?.data?.length}
                         indeterminate={
-                          formData.functionIds.length > 0 && formData.functionIds.length < functions?.data?.length
+                          formData?.functionIds?.length > 0 && formData.functionIds.length < functions?.data?.length
                         }
                         onChange={e => (e.target.checked ? handleSelectAll('function') : handleDeselectAll('function'))}
                       />
@@ -964,7 +965,7 @@ const MainPage = () => {
                     <FormControlLabel
                       control={
                         <Checkbox
-                          checked={formData.functionIds.includes(func._id)}
+                          checked={formData?.functionIds?.includes(func._id)}
                           onChange={() => handleCheckboxChange('function', func._id)}
                         />
                       }
@@ -974,7 +975,7 @@ const MainPage = () => {
                 ))}
               </Menu>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                {formData.functionIds.map(id => {
+                {formData?.functionIds?.map(id => {
                   const func = functions?.data?.find(f => f._id === id)
                   return (
                     <Chip
