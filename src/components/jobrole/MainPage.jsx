@@ -32,7 +32,11 @@ import {
   CardContent,
   CardMedia,
   Card,
-  Pagination
+  Pagination,
+  Chip,
+  FormControl,
+  Typography,
+  Menu
 } from '@mui/material'
 import { Edit as EditIcon, Delete as DeleteIcon, Apartment } from '@mui/icons-material'
 
@@ -72,11 +76,13 @@ const MainPage = () => {
     name: '',
     description: '',
     details: '', // For React Quill content
-    industryId: '',
-    functionId: '',
+    industryIds: [],
+    functionIds: [],
     htmlContent: ''
   })
 
+  const [openIndustriesMenu, setOpenIndustriesMenu] = useState(null)
+  const [openFunctionsMenu, setOpenFunctionsMenu] = useState(null)
   const [industries, setIndustries] = useState([]) // Stores the list of industries
   const [functions, setFunctions] = useState([]) // Stores the list of functions
   const [industryLists, setIndustriesLists] = useState([]) // Stores all job roles
@@ -176,7 +182,7 @@ const MainPage = () => {
     const limit = 1000
     try {
       const search = ''
-      const response = await getIndustryList(page, 1000, search) // Get all industries without pagination
+      const response = await getIndustryList(page, 1000, search)
       console.log('ind', response.data.data)
       if (response.status === 200) {
         setIndustries(response.data.data)
@@ -195,6 +201,7 @@ const MainPage = () => {
     const limit = 1000
     try {
       const response = await getFunctions(page, 1000, '') // Get all functions without pagination
+      console.log('func', response.data.data)
       if (response.status === 200) {
         setFunctions(response.data.data)
       }
@@ -215,6 +222,7 @@ const MainPage = () => {
     setLoading(true)
     try {
       const response = await getJobRoles() // Fetch all job roles (no pagination)
+      console.log('jobs', response.data.data.data)
       if (response.status === 200) {
         console.log('count', response.data.data.totalCount)
 
@@ -237,19 +245,13 @@ const MainPage = () => {
     } else if (field === 'description') {
       isValid = value.trim() !== ''
       setIsFormValid(prev => ({ ...prev, description: isValid }))
-    } else if (field === 'industryId') {
-      isValid = value.trim() !== ''
-      setIsFormValid(prev => ({ ...prev, industryId: isValid }))
-    } else if (field === 'functionId') {
-      isValid = value.trim() !== ''
-      setIsFormValid(prev => ({ ...prev, functionId: isValid }))
     }
   }
   const validateForm = (data = formData) => {
     const nameValid = data.name && data.name.trim() !== ''
     const descriptionValid = data.description && data.description.trim() !== ''
-    const industryIdValid = data.industryId && data.industryId.trim() !== ''
-    const functionIdValid = data.functionId && data.functionId.trim() !== ''
+    const industryIdValid = data.industryIds && data.industryIds.length > 0
+    const functionIdValid = data.functionIds && data.functionIds.length > 0
 
     const isValid = nameValid && descriptionValid && industryIdValid && functionIdValid
 
@@ -257,16 +259,16 @@ const MainPage = () => {
     setTouchedFields({
       name: true,
       description: true,
-      industryId: true,
-      functionId: true
+      industryIds: true,
+      functionIds: true
     })
 
     // Update validation state
     setIsFormValid({
       name: nameValid,
       description: descriptionValid,
-      industryId: industryIdValid,
-      functionId: functionIdValid
+      industryIds: industryIdValid,
+      functionIds: functionIdValid
     })
 
     return isValid
@@ -279,7 +281,12 @@ const MainPage = () => {
       ...prev,
       [name]: true
     }))
-
+    if (name === 'industryIds' || name === 'functionIds') {
+      setFormData(prevState => ({
+        ...prevState,
+        [name]: typeof value === 'string' ? value.split(',') : value // Handle multiple selections
+      }))
+    }
     setFormData(prevState => {
       const updatedFormData = { ...prevState, [name]: value }
 
@@ -289,11 +296,28 @@ const MainPage = () => {
       return updatedFormData
     })
   }
+  // const handleInputChange = e => {
+  //   const { name, value } = e.target
 
-  const handleCheckboxChange = e => {
-    const { checked } = e.target
-    setFormData(prevState => ({ ...prevState, isImportant: checked }))
-  }
+  //   // Mark the field as touched
+  //   setTouchedFields(prev => ({
+  //     ...prev,
+  //     [name]: true
+  //   }))
+
+  //   // Update form data
+  //   setFormData(prevState => {
+  //     const updatedValue =
+  //       name === 'industryIds' || name === 'functionIds' ? (Array.isArray(value) ? value : []) : value
+
+  //     const updatedFormData = { ...prevState, [name]: updatedValue }
+
+  //     // Validate the updated field
+  //     validateField(name, updatedValue)
+
+  //     return updatedFormData
+  //   })
+  // }
 
   const handleDetailsChange = value => {
     setFormData(prevState => ({ ...prevState, htmlContent: value }))
@@ -316,13 +340,31 @@ const MainPage = () => {
     if (industry) {
       console.log('Industry', industry)
       // Prefill the form data with the existing industry data for editing
+      const prefilledIndustryIds = industry.industries
+        ? industry.industries
+            .map(name => {
+              const matchingIndustry = industries?.industries?.find(ind => ind.name === name)
+              return matchingIndustry ? matchingIndustry._id : null
+            })
+            .filter(id => id) // Filter out any null values
+        : []
+
+      // Map function names to their corresponding IDs
+      const prefilledFunctionIds = industry.functions
+        ? industry.functions
+            .map(name => {
+              const matchingFunction = functions?.data?.find(func => func.name === name)
+              return matchingFunction ? matchingFunction._id : null
+            })
+            .filter(id => id) // Filter out any null values
+        : []
       setFormData({
         name: industry?.name,
         description: industry?.description,
         details: industry?.htmlContent || '', // If 'details' exist, otherwise set it as empty
         // isImportant: industry.isImportant || false
-        industryId: industry?.industry?._id || '',
-        functionId: industry?.function?._id || '' // If 'functionId' exist, otherwise set it as empty
+        industryIds: prefilledIndustryIds,
+        functionIds: prefilledFunctionIds // If 'functionId' exist, otherwise set it as empty
       })
       setEditingIndex(industry._id) // Save the index or ID to track which industry is being edited
     } else {
@@ -384,8 +426,8 @@ const MainPage = () => {
         name: formData?.name,
         description: formData?.description,
         htmlContent: formData?.details,
-        industryId: formData?.industryId,
-        functionId: formData?.functionId
+        industryIds: formData?.industryIds,
+        functionIds: formData?.functionIds
       }
 
       try {
@@ -396,8 +438,8 @@ const MainPage = () => {
             name: formData.name,
             description: formData?.description,
             htmlContent: formData?.details,
-            industryId: formData?.industryId,
-            functionId: formData?.functionId
+            industryIds: formData?.industryIds,
+            functionIds: formData?.functionIds
           }
           // If we are editing, call the editIndustry API
           response = await updateJobRoles(editedPayload)
@@ -412,6 +454,8 @@ const MainPage = () => {
             name: '',
             description: '',
             details: '',
+            industryIds: [],
+            functionIds: [],
             isImportant: false
           })
           setOpenModal(false)
@@ -446,6 +490,31 @@ const MainPage = () => {
       }
     }
   }, [])
+  const handleSelectAll = type => {
+    if (type === 'industry') {
+      const allIndustryIds = industries?.industries?.map(industry => industry._id)
+      setFormData(prev => ({ ...prev, industryIds: allIndustryIds }))
+    } else if (type === 'function') {
+      const allFunctionIds = functions?.data?.map(func => func._id)
+      setFormData(prev => ({ ...prev, functionIds: allFunctionIds }))
+    }
+  }
+
+  const handleDeselectAll = type => {
+    if (type === 'industry') {
+      setFormData(prev => ({ ...prev, industryIds: [] }))
+    } else if (type === 'function') {
+      setFormData(prev => ({ ...prev, functionIds: [] }))
+    }
+  }
+
+  const handleCheckboxChange = (type, id) => {
+    setFormData(prev => {
+      const ids = type === 'industry' ? prev.industryIds : prev.functionIds
+      const updatedIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]
+      return { ...prev, [type === 'industry' ? 'industryIds' : 'functionIds']: updatedIds }
+    })
+  }
 
   return (
     <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
@@ -552,15 +621,31 @@ const MainPage = () => {
                       sx={{
                         background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
                         color: 'white',
-                        '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+                        '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' },
+                        width: 80,
+                        fontSize: 12
                       }}
                       onClick={() => handleViewDetails(industry)}
                     >
                       View Details
                     </Button>
                   </TableCell>
-                  <TableCell>{industry.industry.name}</TableCell>
-                  <TableCell>{industry.function.name}</TableCell>
+                  <TableCell>
+                    {industry?.industries?.map((name, i) => (
+                      <Chip key={i} label={name} sx={{ fontSize: 15, height: 24 }} color='primary' variant='outlined' />
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    {industry?.functions?.map((name, i) => (
+                      <Chip
+                        key={i}
+                        label={name}
+                        sx={{ marginRight: 0.5, marginBottom: 0.5 }}
+                        color='primary'
+                        variant='outlined'
+                      />
+                    ))}
+                  </TableCell>
                   <TableCell>
                     <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
                       <EditIcon />
@@ -603,33 +688,188 @@ const MainPage = () => {
               helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
             />
             {/* Industry Select */}
-            <Grid item xs={12}>
-              <TextField
-                select
-                label='Industry'
-                name='industryId'
-                value={formData.industryId}
-                onChange={handleInputChange}
-                fullWidth
-                error={!isFormValid.industryId}
-                helperText={!isFormValid.industryId ? 'Industry is required' : ''}
-              >
+            {/* <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Select
+                  select
+                  label='Industry'
+                  name='industryId'
+                  value={formData.industryIds || []}
+                  // onChange={handleInputChange}
+                  onChange={e => {
+                    setFormData(prev => ({
+                      ...prev,
+                      industryIds: e.target.value // `value` will be an array in multi-select
+                    }))
+                    setTouchedFields(prev => ({ ...prev, industryIds: true })) // Mark as touched
+                  }}
+                  renderValue={
+                    selected =>
+                      selected
+                        .map(id => {
+                          const industry = industries?.industries?.find(ind => ind._id === id)
+                          return industry ? industry.name : ''
+                        })
+                        .join(', ') // Show selected industry names
+                  }
+                  fullWidth
+                  multiple
+                  error={!isFormValid.industryId}
+                  helperText={!isFormValid.industryId ? 'Industry is required' : ''}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflowY: 'auto'
+                      }
+                    }
+                  }}
+                >
+                  {industries?.industries?.map(industry => (
+                    <MenuItem key={industry._id} value={industry._id}>
+                      {industry.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ marginTop: 2 }}>
+                {formData?.industryIds?.map((id, index) => {
+                  const industry = industries?.industries?.find(ind => ind._id === id)
+                  return (
+                    industry && (
+                      <Chip
+                        key={index}
+                        label={industry.name}
+                        onDelete={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            industryIds: prev.industryIds.filter(itemId => itemId !== id)
+                          }))
+                        }}
+                        sx={{ marginRight: 1, marginBottom: 1 }}
+                      />
+                    )
+                  )
+                })}
+              </Box>
+            </Grid> */}
+
+            {/* <Grid item xs={12}>
+              <Typography variant='subtitle1'>Industries</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Button size='small' onClick={() => handleSelectAll('industry')}>
+                  Select All
+                </Button>
+                <Button size='small' onClick={() => handleDeselectAll('industry')}>
+                  Deselect All
+                </Button>
+              </Box>
+              <Box sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ccc', padding: 1 }}>
                 {industries?.industries?.map(industry => (
-                  <MenuItem key={industry._id} value={industry._id}>
-                    {industry.name}
+                  <FormControlLabel
+                    key={industry._id}
+                    control={
+                      <Checkbox
+                        checked={formData.industryIds.includes(industry._id)}
+                        onChange={() => handleCheckboxChange('industry', industry._id)}
+                      />
+                    }
+                    label={industry.name}
+                  />
+                ))}
+              </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1'>Industries</Typography>
+              <Button
+                variant='outlined'
+                onClick={e => setOpenIndustriesMenu(e.currentTarget)}
+                sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
+              >
+                {`Select Industries (${formData.industryIds.length})`}
+              </Button>
+              <Menu
+                anchorEl={openIndustriesMenu}
+                open={Boolean(openIndustriesMenu)}
+                onClose={() => setOpenIndustriesMenu(null)}
+                PaperProps={{
+                  style: {
+                    maxHeight: 300,
+                    width: 250
+                  }
+                }}
+              >
+                <MenuItem>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.industryIds.length === industries?.industries?.length}
+                        indeterminate={
+                          formData.industryIds.length > 0 &&
+                          formData.industryIds.length < industries?.industries?.length
+                        }
+                        onChange={e => (e.target.checked ? handleSelectAll('industry') : handleDeselectAll('industry'))}
+                      />
+                    }
+                    label='Select All'
+                  />
+                </MenuItem>
+                {industries?.industries?.map(industry => (
+                  <MenuItem key={industry._id} sx={{ padding: 0 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formData.industryIds.includes(industry._id)}
+                          onChange={() => handleCheckboxChange('industry', industry._id)}
+                        />
+                      }
+                      label={industry.name}
+                    />
                   </MenuItem>
                 ))}
-              </TextField>
+              </Menu>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                {formData.industryIds.map(id => {
+                  const industry = industries?.industries?.find(ind => ind._id === id)
+                  return (
+                    <Chip
+                      key={id}
+                      label={industry?.name}
+                      onDelete={() => handleCheckboxChange('industry', id)}
+                      color='primary'
+                      variant='outlined'
+                    />
+                  )
+                })}
+              </Box>
             </Grid>
+
             {/* Function Select */}
-            <Grid item xs={12}>
-              <TextField
+            {/* <Grid item xs={12}>
+              <Select
                 select
                 label='Function'
                 name='functionId'
-                value={formData.functionId}
-                onChange={handleInputChange}
+                value={formData.functionIds || []}
+                // onChange={handleInputChange}
+                onChange={e => {
+                  setFormData(prev => ({
+                    ...prev,
+                    functionIds: e.target.value // `value` will be an array in multi-select
+                  }))
+                  setTouchedFields(prev => ({ ...prev, functionIds: true })) // Mark as touched
+                }}
+                renderValue={
+                  selected =>
+                    selected
+                      .map(id => {
+                        const func = functions?.data?.find(f => f._id === id)
+                        return func ? func.name : ''
+                      })
+                      .join(', ') // Show selected function names
+                }
                 fullWidth
+                multiple
                 error={!isFormValid.functionId}
                 helperText={!isFormValid.functionId ? 'Function is required' : ''}
               >
@@ -638,7 +878,115 @@ const MainPage = () => {
                     {func.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </Select>
+              <Box sx={{ marginTop: 2 }}>
+                {formData?.functionIds?.map((id, index) => {
+                  const func = functions?.data?.find(f => f._id === id)
+                  return (
+                    func && (
+                      <Chip
+                        key={index}
+                        label={func.name}
+                        onDelete={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            functionIds: prev.functionIds.filter(itemId => itemId !== id)
+                          }))
+                        }}
+                        sx={{ marginRight: 1, marginBottom: 1 }}
+                      />
+                    )
+                  )
+                })}
+              </Box>
+            </Grid> */}
+            {/* <Grid item xs={12}>
+              <Typography variant='subtitle1'>Functions</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Button size='small' onClick={() => handleSelectAll('function')}>
+                  Select All
+                </Button>
+                <Button size='small' onClick={() => handleDeselectAll('function')}>
+                  Deselect All
+                </Button>
+              </Box>
+              <Box sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ccc', padding: 1 }}>
+                {functions?.data?.map(func => (
+                  <FormControlLabel
+                    key={func._id}
+                    control={
+                      <Checkbox
+                        checked={formData.functionIds.includes(func._id)}
+                        onChange={() => handleCheckboxChange('function', func._id)}
+                      />
+                    }
+                    label={func.name}
+                  />
+                ))}
+              </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1'>Functions</Typography>
+              <Button
+                variant='outlined'
+                onClick={e => setOpenFunctionsMenu(e.currentTarget)}
+                sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
+              >
+                {`Select Functions (${formData.functionIds.length})`}
+              </Button>
+              <Menu
+                anchorEl={openFunctionsMenu}
+                open={Boolean(openFunctionsMenu)}
+                onClose={() => setOpenFunctionsMenu(null)}
+                PaperProps={{
+                  style: {
+                    maxHeight: 300,
+                    width: 250
+                  }
+                }}
+              >
+                <MenuItem>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.functionIds.length === functions?.data?.length}
+                        indeterminate={
+                          formData.functionIds.length > 0 && formData.functionIds.length < functions?.data?.length
+                        }
+                        onChange={e => (e.target.checked ? handleSelectAll('function') : handleDeselectAll('function'))}
+                      />
+                    }
+                    label='Select All'
+                  />
+                </MenuItem>
+                {functions?.data?.map(func => (
+                  <MenuItem key={func._id} sx={{ padding: 0 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formData.functionIds.includes(func._id)}
+                          onChange={() => handleCheckboxChange('function', func._id)}
+                        />
+                      }
+                      label={func.name}
+                    />
+                  </MenuItem>
+                ))}
+              </Menu>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                {formData.functionIds.map(id => {
+                  const func = functions?.data?.find(f => f._id === id)
+                  return (
+                    <Chip
+                      key={id}
+                      label={func?.name}
+                      onDelete={() => handleCheckboxChange('function', id)}
+                      color='secondary'
+                      variant='outlined'
+                    />
+                  )
+                })}
+              </Box>
             </Grid>
             {/* React Quill Editor for Details */}
             <Grid item xs={12}>

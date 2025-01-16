@@ -57,7 +57,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import tableStyles from '@core/styles/table.module.css'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 
-import { appUserList } from '@/app/api'
+import { appUserList, blockUser, unBlockUser } from '@/app/api'
 
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -137,16 +137,28 @@ const UserListTable = () => {
     }
   }
 
-  const handleBlockDialogOpen = data => {
-    setBlockModal(true)
+  const handleToggleBlockConfirm = async () => {
+    const payload = { userId: selectedUserId }
     try {
-      console.log('block', data)
-      if (data) {
-        setAlreadyBlockedModules(data?.blocked)
-        setSelectedUserId(data.id)
+      if (isBlocking) {
+        // Call Block API
+        const response = await unBlockUser(payload)
+        if (response.status == 200) {
+          toast.success('User blocked successfully.')
+          fetchAllUsers()
+        }
+      } else {
+        // Call Unblock API
+        const response = await blockUser(payload)
+        if (response.status == 200) {
+          toast.success('User unblocked successfully.')
+          fetchAllUsers()
+        }
       }
     } catch (error) {
-      setAlreadyBlockedModules([])
+      toast.error('Failed to update user status.')
+    } finally {
+      handleCloseDialog()
     }
   }
 
@@ -174,53 +186,16 @@ const UserListTable = () => {
     return () => clearInterval(interval)
   }, [animateData])
 
-  const handleOpenDialog = (user, blocking) => {
-    setSelectedUser(user)
-    setIsBlocking(blocking)
-    setOpenDialog(true)
-  }
   const handleCloseDialog = () => {
     setOpenDialog(false)
     setSelectedUser(null)
     setIsBlocking(false)
-  }
-  const handleOpenPetDialog = pets => {
-    setSelectedPets(pets)
-    setOpenPetDialog(true)
-  }
-  const handleEditPawPoints = user => {
-    setEditingPawPoints(user.id)
-  }
-
-  const handleClosePetDialog = () => {
-    setOpenPetDialog(false)
-    setSelectedPets([])
-  }
-  const handleToggleBlockConfirm = async () => {
-    const payload = { module: 'ALL' }
-    try {
-      if (isBlocking) {
-        const response = await blockUser(selectedUser.id, payload)
-        if (response.data.success) {
-          toast.success(`User blocked for the whole app`)
-          setData(prevData => prevData.map(u => (u.id === selectedUser.id ? { ...u, blocked: ['ALL'] } : u)))
-        }
-      } else {
-        const response = await unblockUser(selectedUser.id, payload)
-        if (response) {
-          toast.success(`User unblocked`)
-          fetchAllUsers()
-        }
-      }
-    } catch (error) {
-      toast.error('Failed to toggle block status')
-    }
-    handleCloseDialog()
+    setBlockModal(false)
   }
 
   useEffect(() => {
     fetchAllUsers()
-  }, [])
+  }, [isBlocking])
   const globalFilterFn = (row, _, filterValue) => {
     const { name, email, phone, course, stream } = row.original || {}
     const searchTerm = filterValue.toLowerCase() // Convert filterValue to lowercase for case-insensitive search
@@ -235,60 +210,11 @@ const UserListTable = () => {
     )
   }
 
-  const handleToggleBlock = async user => {
-    const payload = { module: 'ALL' }
-    try {
-      if (user.blocked.length > 0) {
-        const response = await unblockUser(user.id, payload)
-        if (response) {
-          toast.success(`User unblocked`)
-          fetchAllUsers()
-        }
-      } else {
-        const response = await blockUser(user.id, payload)
-        if (response.data.success) {
-          toast.success(`User blocked for the whole app`)
-          setData(prevData => prevData.map(u => (u.id === user.id ? { ...u, blocked: ['ALL'] } : u)))
-        }
-      }
-    } catch (error) {
-      toast.error('Failed to toggle block status')
-    }
-  }
-
   const truncateText = (text, maxLength = 20) => {
     if (!text) return 'N/A'
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
   }
 
-  const handleClick = value => {
-    console.log('got', value)
-    setPawEdit(true)
-    return
-  }
-  const handlePawPointsChange = async (userId, value) => {
-    const user = data?.find(user => user.id === userId)
-    if (!user || Number(user.pawPoints) === Number(value)) {
-      setEditingPawPoints(null)
-      return
-    }
-    console.log('to', userId, value)
-    const payload = {
-      pawPoints: value
-    }
-    try {
-      const response = await updatePawPoints(userId, payload)
-
-      // setData(prevData => prevData.map(user => (user.id === userId ? { ...user, pawPoints: value } : user)))
-      if (response.status == 200) {
-        fetchAllUsers()
-        toast.success('PawPoints updated successfully')
-        setEditingPawPoints(null)
-      }
-    } catch (error) {
-      toast.error('Failed to update PawPoints')
-    }
-  }
   const getRowStyle = index => ({
     backgroundColor: index % 2 === 0 ? '#f3f3f3' : '#ffffff', // Alternating row color
     '&:hover': {
@@ -309,6 +235,12 @@ const UserListTable = () => {
   const handleBlockModalClose = () => {
     setOpenBlockModal(false)
     setBlockModal(false)
+  }
+  const handleBlockDialogOpen = user => {
+    console.log('id', user)
+    setSelectedUserId(user._id)
+    setIsBlocking(user.isActive) // true if blocking, false if unblocking
+    setBlockModal(true)
   }
 
   const columns = useMemo(
@@ -344,15 +276,7 @@ const UserListTable = () => {
           </Tooltip>
         )
       },
-      {
-        header: 'Phone',
-        accessorKey: 'phone',
-        cell: ({ row }) => (
-          <Tooltip title={row?.original?.mobile || 'N/A'}>
-            <Typography>{truncateText(row.original.mobile)}</Typography>
-          </Tooltip>
-        )
-      },
+
       {
         header: 'Phone',
         accessorKey: 'phone',
@@ -397,38 +321,23 @@ const UserListTable = () => {
             <Typography>{truncateText(row.original.city)}</Typography>
           </Tooltip>
         )
+      },
+      {
+        header: 'Status',
+        accessorKey: 'status',
+        cell: ({ row }) => (
+          <Button
+            variant='contained'
+            size='small'
+            // color={row.original.blocked.length > 0 ? 'success' : 'error'}
+            onClick={() => handleBlockDialogOpen(row.original)} // disabled={userRole !== 'superadmin' && userRole !== 'admin'}
+          >
+            {row.original.isActive ? 'Unblock' : 'Block'}
+          </Button>
+        )
       }
-      // {
-      //   header: 'Active',
-      //   accessorKey: 'active',
-      //   cell: ({ row }) => (
-      //     <Button
-      //       variant='contained'
-      //       size='small'
-      //       color={row.original.blocked.length > 0 ? 'success' : 'error'}
-      //       onClick={() => handleBlockDialogOpen(row.original)}
-      //       disabled={userRole !== 'superadmin' && userRole !== 'admin'}
-      //     >
-      //       {row.original.blocked.length > 0 ? 'Unblock' : 'Block'}
-      //     </Button>
-      //   )
-      // },
-      // {
-      //   header: 'Actions',
-      //   accessorKey: 'actions',
-      //   cell: ({ row }) => (
-      //     <IconButton
-      //       // disabled={userRole !== 'superadmin' && userRole !== 'admin'}
-      //       onClick={() => handleOpenPawPointsModal(row.original)}
-      //       color='primary'
-      //       aria-label='edit paw points'
-      //     >
-      //       <EditIcon />
-      //     </IconButton>
-      //   )
-      // }
     ],
-    [editingPawPoints, userRole]
+    [isBlocking]
   )
 
   const blockModules = ['veterinary', 'community', 'shop', 'match', 'all']
@@ -656,7 +565,7 @@ const UserListTable = () => {
           onPageChange={(_, page) => table.setPageIndex(page)}
         />
       </Card>
-      <Dialog open={''} onClose={handleCloseDialog}>
+      <Dialog open={blockModal} onClose={handleCloseDialog}>
         <DialogTitle>{isBlocking ? 'Block User' : 'Unblock User'}</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to {isBlocking ? 'block' : 'unblock'} this user?</DialogContentText>
@@ -666,7 +575,7 @@ const UserListTable = () => {
             Cancel
           </Button>
           <Button onClick={handleToggleBlockConfirm} color='secondary'>
-            {isBlocking ? 'Block' : 'Unblock'}
+            {isBlocking ? 'UnBlock' : 'Block'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -721,7 +630,7 @@ const UserListTable = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={blockModal} onClose={handleBlockModalClose}>
+      {/* <Dialog open={blockModal} onClose={handleBlockModalClose}>
         <DialogTitle>Manage Blocked Modules</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -772,7 +681,7 @@ const UserListTable = () => {
             Save Changess
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       <Dialog open={openPawPointsModal} onClose={handleClosePawPointsModal}>
         <DialogTitle>Edit PawPoints</DialogTitle>
@@ -789,14 +698,14 @@ const UserListTable = () => {
             sx={{ marginTop: 2 }}
           />
         </DialogContent>
-        <DialogActions>
+        {/* <DialogActions>
           <Button onClick={handleClosePawPointsModal} color='secondary'>
             Cancel
           </Button>
           <Button onClick={handleUpdatePawPoints} color='primary' variant='contained'>
             Save
           </Button>
-        </DialogActions>
+        </DialogActions> */}
       </Dialog>
     </>
   )

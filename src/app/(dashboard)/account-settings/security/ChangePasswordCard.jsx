@@ -31,6 +31,7 @@ import CustomTextField from '@core/components/mui/TextField'
 // import { sendOTP, changePassword } from '@/app/api'
 
 import 'react-toastify/dist/ReactToastify.css'
+import { editAdminUserDetails } from '@/app/api'
 
 const ChangePasswordCard = () => {
   // States
@@ -43,50 +44,61 @@ const ChangePasswordCard = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [sessionToken, setSessionToken] = useState('')
   const [loading, setLoading] = useState(false)
+  const [userData, setUserData] = useState()
 
   const otpRefs = useRef([])
 
   useEffect(() => {
-    const userEmail = localStorage.getItem("userDetails")
+    const userdata = localStorage.getItem('user')
 
-    if (userEmail) {
-      const userDetails = JSON.parse(userEmail);
-      
-      setEmail(userDetails.email)
+    if (userdata) {
+      const user = JSON.parse(userdata)
+
+      setUserData(user)
     }
   }, [])
 
+  useEffect(() => {
+    console.log('ud', userData)
+  }, [userData])
+
   const handleSendOtp = useCallback(async () => {
     setLoading(true)
-    const data = { email }
+    const data = { userId: userData?._id, name: userData?.name, mobile: userData?.email, password: newPassword }
 
     try {
-      const response = await sendOTP(data)
+      console.log('pay', data)
+      const response = await editAdminUserDetails(data)
 
-      console.log("otp",response)
+      console.log('otp', response)
+      if (response.status === 200) {
+        toast.success('OTP sent successfully')
+      }
 
-      setSessionToken(response.data.data.sessionToken)
-      setIsOtpSent(true)
-      toast.success('OTP sent successfully')
+      // setSessionToken(response.data.data.sessionToken)
+      // setIsOtpSent(true)
     } catch (error) {
       console.error('Error sending OTP:', error)
       toast.error('Error sending OTP')
     } finally {
       setLoading(false)
     }
-  }, [email])
+  }, [newPassword])
 
-  const handleOtpChange = useCallback((value, index) => {
-    if (value.length > 1) return
-    const newOtp = [...otp]
+  const handleOtpChange = useCallback(
+    (value, index) => {
+      if (value.length > 1) return
+      const newOtp = [...otp]
 
-    newOtp[index] = value
-    setOtp(newOtp)
+      newOtp[index] = value
+      setOtp(newOtp)
 
-    if (value && index < otpRefs.current.length - 1) {
-      otpRefs.current[index + 1].focus()
-    }
-  }, [otp])
+      if (value && index < otpRefs.current.length - 1) {
+        otpRefs.current[index + 1].focus()
+      }
+    },
+    [otp]
+  )
 
   const handleSaveChanges = useCallback(async () => {
     if (newPassword !== confirmNewPassword) {
@@ -97,8 +109,8 @@ const ChangePasswordCard = () => {
 
     setLoading(true)
     const otpCode = otp.join('')
-    
-    console.log("st",sessionToken)
+
+    console.log('st', sessionToken)
     const data = { email, otp: otpCode, sessionToken, password: newPassword }
 
     try {
@@ -131,116 +143,28 @@ const ChangePasswordCard = () => {
       <CardContent>
         <form>
           {loading && (
-            <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <Box display='flex' justifyContent='center' alignItems='center' height='300px'>
               <CircularProgress />
             </Box>
           )}
           {!loading && (
             <Grid container spacing={6}>
-              {!isOtpSent && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      fullWidth
-                      label='Email'
-                      value={email}
-                      disabled={true}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button variant='contained' onClick={handleSendOtp}>
-                      Send OTP
-                    </Button>
-                  </Grid>
-                </>
-              )}
-              {isOtpSent && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <Typography>Enter OTP</Typography>
-                    <div className='flex gap-2'>
-                      {otp.map((value, index) => (
-                        <CustomTextField
-                          key={index}
-                          value={value}
-                          onChange={(e) => handleOtpChange(e.target.value, index)}
-                          inputProps={{ maxLength: 1 }}
-                          inputRef={el => (otpRefs.current[index] = el)}
-                        />
-                      ))}
-                    </div>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      fullWidth
-                      label='New Password'
-                      type={isNewPasswordShown ? 'text' : 'password'}
-                      placeholder='············'
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position='end'>
-                            <IconButton
-                              edge='end'
-                              onClick={() => setIsNewPasswordShown(!isNewPasswordShown)}
-                              onMouseDown={(e) => e.preventDefault()}
-                            >
-                              <i className={isNewPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
-                            </IconButton>
-                          </InputAdornment>
-                        )
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      fullWidth
-                      label='Confirm New Password'
-                      type={isConfirmPasswordShown ? 'text' : 'password'}
-                      placeholder='············'
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position='end'>
-                            <IconButton
-                              edge='end'
-                              onClick={() => setIsConfirmPasswordShown(!isConfirmPasswordShown)}
-                              onMouseDown={(e) => e.preventDefault()}
-                            >
-                              <i className={isConfirmPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
-                            </IconButton>
-                          </InputAdornment>
-                        )
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} className='flex flex-col gap-4'>
-                    {/* <Typography variant='h6'>Password Requirements:</Typography>
-                    <div className='flex flex-col gap-4'>
-                      <div className='flex items-center gap-2.5'>
-                        <i className='tabler-circle-filled text-[8px]' />
-                        Minimum 8 characters long - the more, the better
-                      </div>
-                      <div className='flex items-center gap-2.5'>
-                        <i className='tabler-circle-filled text-[8px]' />
-                        At least one lowercase & one uppercase character
-                      </div>
-                      <div className='flex items-center gap-2.5'>
-                        <i className='tabler-circle-filled text-[8px]' />
-                        At least one number, symbol, or whitespace character
-                      </div>
-                    </div> */}
-                  </Grid>
-                  <Grid item xs={12} className='flex gap-4'>
-                    <Button variant='contained' onClick={handleSaveChanges}>Save Changes</Button>
-                    <Button variant='tonal' type='button' color='secondary' onClick={handleReset}>
-                      Reset
-                    </Button>
-                  </Grid>
-                </>
-              )}
+              <>
+                <Grid item xs={12} sm={6}>
+                  <CustomTextField
+                    fullWidth
+                    label='Password'
+                    onChange={e => setNewPassword(e.target.value)}
+                    value={newPassword}
+                    disabled={false}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button variant='contained' onClick={handleSendOtp}>
+                    Change Password
+                  </Button>
+                </Grid>
+              </>
             </Grid>
           )}
         </form>

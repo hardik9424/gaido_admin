@@ -5,6 +5,9 @@ export const verifyUser = data => axios('admin/auth/verifyadmin', 'POST', data)
 export const loginAdminUser = data => axios('admin/auth/login', 'POST', data)
 export const adminDetails = data => axios('admin/auth/admiindetails', 'POST', data)
 
+//api to update admin email name number
+export const changeAdminDetails = data=>axios('admin/auth/changedetails', 'PUT', data)
+
 //api to get analytics
 export const getUserAnalytics = data => axios('admin/auth/useranalytics', 'GET', data)
 
@@ -37,7 +40,7 @@ export const editRoles = data => axios('admin/auth/adminuser/role/update', 'PUT'
 
 // api to get all industry lists
 export const getIndustryList = (page, limit, globalFilter) =>
-  axios(`admin/auth/industrylists?page=${page}&limit=${limit}$&search=${globalFilter}`, 'GET')
+  axios(`admin/auth/industrylists?page=${page}&limit=${limit}&search=${globalFilter}`, 'GET')
 // export const getIndustryList = (page, limit, search = '') => {
 //   const searchQuery = search ? `&search=${encodeURIComponent(search)}` : '' // Add search term if provided
 //   return axios(`admin/auth/industrylists?page=${page}&limit=${limit}${searchQuery}`, 'GET')
@@ -86,3 +89,8 @@ export const getSettings = data => axios('admin/auth/settings', 'GET', data)
 export const createNew = data => axios('admin/auth/createnews', 'POST', data)
 export const updateNews = data => axios('admin/auth/updatenews', 'PUT', data)
 export const deleteNews = data => axios('admin/auth/deletenews', 'DELETE', data)
+
+
+// block/un apis
+export const blockUser = data => axios('admin/auth/blockuser', 'PUT', data)
+export const unBlockUser = data => axios('admin/auth/unblockuser', 'PUT',data)
