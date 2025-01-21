@@ -4,6 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+
+import { SketchPicker } from 'react-color'
+
+import { ColorLens as ColorLensIcon } from '@mui/icons-material'
+
 import {
   Box,
   Button,
@@ -36,7 +41,8 @@ import {
   Chip,
   FormControl,
   Typography,
-  Menu
+  Menu,
+  Popover
 } from '@mui/material'
 import { Edit as EditIcon, Delete as DeleteIcon, Apartment } from '@mui/icons-material'
 
@@ -67,7 +73,8 @@ import {
   deleteJobRoles,
   updateJobRoles,
   uploadFile,
-  adminDetails
+  adminDetails,
+  uploadJobCsv
 } from '@/app/api'
 import CustomTextField from '@/@core/components/mui/TextField'
 
@@ -78,7 +85,9 @@ const MainPage = () => {
     details: '', // For React Quill content
     industryIds: [],
     functionIds: [],
-    htmlContent: ''
+    htmlContent: '',
+    color: '',
+    imageUrl: ''
   })
 
   const [openIndustriesMenu, setOpenIndustriesMenu] = useState(null)
@@ -125,7 +134,22 @@ const MainPage = () => {
 
     return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
   }
+  const [colorPickerAnchor, setColorPickerAnchor] = useState(null) // Anchor for Popover
+  const [hoveredImage, setHoveredImage] = useState(null)
+  const [anchorEl, setAnchorEl] = useState(null)
 
+  const handleImageHover = (event, imageUrl) => {
+    setHoveredImage(imageUrl)
+    setAnchorEl(event.currentTarget) // Set the anchor element for the popover
+  }
+
+  const handleImageLeave = () => {
+    // setHoveredImage(null)
+    setAnchorEl(null) // Close the popover
+  }
+  const handleOpenColorPicker = event => setColorPickerAnchor(event.currentTarget)
+  const handleCloseColorPicker = () => setColorPickerAnchor(null)
+  const isColorPickerOpen = Boolean(colorPickerAnchor)
   useEffect(() => {
     const userData = localStorage.getItem('user')
     const parsedData = JSON.parse(userData)
@@ -334,7 +358,8 @@ const MainPage = () => {
       details: '',
       isImportant: false,
       industryId: '',
-      functionId: ''
+      functionId: '',
+      color: ''
     })
   }
   const handleOpenModal = industry => {
@@ -362,12 +387,14 @@ const MainPage = () => {
       setFormData({
         name: industry?.name,
         description: industry?.description,
-        details: industry?.htmlContent || '', // If 'details' exist, otherwise set it as empty
-        // isImportant: industry.isImportant || false
+        details: industry?.htmlContent || '',
+        color: industry?.color || '',
+        imageUrl: industry?.imageUrl || '',
+
         industryIds: prefilledIndustryIds,
-        functionIds: prefilledFunctionIds // If 'functionId' exist, otherwise set it as empty
+        functionIds: prefilledFunctionIds
       })
-      setEditingIndex(industry._id) // Save the index or ID to track which industry is being edited
+      setEditingIndex(industry._id)
     } else {
       // If no industry is passed, this means it's for adding a new industry, so reset the form
       setFormData({
@@ -428,7 +455,9 @@ const MainPage = () => {
         description: formData?.description,
         htmlContent: formData?.details,
         industryIds: formData?.industryIds,
-        functionIds: formData?.functionIds
+        functionIds: formData?.functionIds,
+        color: formData?.color,
+        imageUrl: formData?.imageUrl
       }
 
       try {
@@ -440,7 +469,9 @@ const MainPage = () => {
             description: formData?.description,
             htmlContent: formData?.details,
             industryIds: formData?.industryIds,
-            functionIds: formData?.functionIds
+            functionIds: formData?.functionIds,
+            color: formData?.color,
+            imageUrl: formData?.imageUrl
           }
           // If we are editing, call the editIndustry API
           response = await updateJobRoles(editedPayload)
@@ -516,6 +547,25 @@ const MainPage = () => {
       return { ...prev, [type === 'industry' ? 'industryIds' : 'functionIds']: updatedIds }
     })
   }
+  const handleImportCSV = async event => {
+    const file = event?.target?.files[0] // Get the selected file
+    console.log('file', file)
+
+    if (file) {
+      const formData = new FormData()
+      formData.append('file', file) // Add the file to FormData
+
+      try {
+        const response = await uploadJobCsv(formData)
+        console.log('CSV Upload Response:', response)
+      } catch (error) {
+        console.error('Error uploading CSV:', error)
+        toast.error('An error occurred while importing the CSV.')
+      }
+    } else {
+      toast.error('Please select a valid CSV file.')
+    }
+  }
 
   return (
     <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
@@ -568,6 +618,21 @@ const MainPage = () => {
           placeholder='Search Jobs'
         />
       </Box>
+      <Button
+        variant='contained'
+        component='label'
+        sx={{
+          fontSize: 'small',
+          background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)',
+          color: 'white',
+          '&:hover': { background: 'linear-gradient(90deg, #2E7D32, #155B47)' },
+          minWidth: '150px',
+          height: '30px'
+        }}
+      >
+        Import CSV
+        <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
+      </Button>
 
       {/* Industry List Table */}
       <TableContainer component={Paper} sx={{ marginTop: 4 }}>
@@ -587,12 +652,14 @@ const MainPage = () => {
                 }
               }}
             >
-              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Details</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Industry</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Function</TableCell>
-              <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 250 }}>Description</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 150, maxWidth: 200 }}>Details</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200, maxWidth: 300 }}>Industry</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200, maxWidth: 300 }}>Function</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>Color</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 150 }}>Image</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -648,6 +715,77 @@ const MainPage = () => {
                     ))}
                   </TableCell>
                   <TableCell>
+                    <Box>
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: industry.color || '#ccc',
+                          border: '1px solid #ddd',
+                          marginBottom: 1
+                        }}
+                      />
+                      <Typography variant='caption' sx={{ textAlign: 'center' }}>
+                        {industry.color || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <Box>
+                      <Box
+                        component='img'
+                        src={industry.imageUrl || 'n/a'}
+                        alt='Preview'
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          border: '1px solid #ddd',
+                          transition: 'transform 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                        onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                        onMouseLeave={handleImageLeave}
+                      />
+                    </Box>
+
+                    {/* Popover for Larger Image */}
+                    <Popover
+                      open={Boolean(anchorEl)}
+                      anchorEl={anchorEl}
+                      onClose={handleImageLeave}
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center'
+                      }}
+                      transformOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center'
+                      }}
+                      sx={{
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <Box
+                        component='img'
+                        src={hoveredImage}
+                        alt='Hovered Preview'
+                        sx={{
+                          width: 200,
+                          height: 200,
+                          objectFit: 'contain',
+                          borderRadius: '8px',
+                          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+                        }}
+                      />
+                    </Popover>
+                  </TableCell>
+                  <TableCell>
                     <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
                       <EditIcon />
                     </IconButton>
@@ -666,120 +804,142 @@ const MainPage = () => {
         <DialogTitle>{'Add Job Role'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
-            <TextField
-              label='Job Role Name'
-              name='name'
-              value={formData.name}
-              onChange={handleInputChange}
-              fullWidth
-              margin='normal'
-              error={touchedFields.name && !isFormValid.name} // Show error only if touched
-              helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''} // Show helper text if touched and invalid
-            />
-            <TextField
-              label='Description'
-              name='description'
-              value={formData.description}
-              onChange={handleInputChange}
-              fullWidth
-              margin='normal'
-              multiline
-              rows={4}
-              error={touchedFields.description && !isFormValid.description} // Show error only if touched
-              helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
-            />
-            {/* Industry Select */}
-            {/* <Grid item xs={12}>
-              <FormControl fullWidth>
-                <Select
-                  select
-                  label='Industry'
-                  name='industryId'
-                  value={formData.industryIds || []}
-                  // onChange={handleInputChange}
-                  onChange={e => {
-                    setFormData(prev => ({
-                      ...prev,
-                      industryIds: e.target.value // `value` will be an array in multi-select
-                    }))
-                    setTouchedFields(prev => ({ ...prev, industryIds: true })) // Mark as touched
+            <Grid item xs={12}>
+              <TextField
+                label='Job Role Name'
+                name='name'
+                value={formData.name}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+                error={touchedFields.name && !isFormValid.name} // Show error only if touched
+                helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''} // Show helper text if touched and invalid
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label='Description'
+                name='description'
+                value={formData.description}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+                multiline
+                rows={4}
+                error={touchedFields.description && !isFormValid.description} // Show error only if touched
+                helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
+              />
+            </Grid>
+            {/* color picker */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <TextField
+                  label='Selected Color'
+                  name='BackgroundColor'
+                  value={formData.color}
+                  onChange={handleInputChange}
+                  fullWidth={false}
+                  margin='normal'
+                  sx={{ maxWidth: 200 }}
+                  InputProps={{
+                    style: {
+                      backgroundColor: formData.color, // Set background color
+                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    }
                   }}
-                  renderValue={
-                    selected =>
-                      selected
-                        .map(id => {
-                          const industry = industries?.industries?.find(ind => ind._id === id)
-                          return industry ? industry.name : ''
-                        })
-                        .join(', ') // Show selected industry names
-                  }
-                  fullWidth
-                  multiple
-                  error={!isFormValid.industryId}
-                  helperText={!isFormValid.industryId ? 'Industry is required' : ''}
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: 300,
-                        overflowY: 'auto'
+                />
+                <IconButton
+                  onClick={handleOpenColorPicker}
+                  sx={{
+                    backgroundColor: formData.color || '#f5f5f5',
+                    border: '1px solid #ddd',
+                    '&:hover': { backgroundColor: formData.color || '#e0e0e0' }
+                  }}
+                >
+                  <ColorLensIcon sx={{ color: formData.color === '#ffffff' ? '#000' : '#fff' }} />
+                </IconButton>
+                <Popover
+                  open={isColorPickerOpen}
+                  anchorEl={colorPickerAnchor}
+                  onClose={handleCloseColorPicker}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                >
+                  <SketchPicker
+                    color={formData.color || '#ffffff'}
+                    onChangeComplete={color => {
+                      setFormData(prevState => ({
+                        ...prevState,
+                        color: color.hex // Update the color in state
+                      }))
+                    }}
+                    disableAlpha // Disable the alpha slider if transparency isn't needed
+                  />
+                </Popover>
+              </Box>
+            </Grid>
+            {/* Industry Image Input */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={async e => {
+                    const file = e.target.files[0] // Get the selected file
+                    if (file) {
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+
+                        // Call the API to upload the file
+                        const response = await uploadFile(formData)
+                        if (response.status === 200) {
+                          const imageUrl = response.data.data.fileUrl
+                          console.log('Uploaded Image URL:', imageUrl)
+
+                          // Update formData with the uploaded image URL
+                          setFormData(prevState => ({
+                            ...prevState,
+                            imageUrl: imageUrl
+                          }))
+
+                          toast.success('Image uploaded successfully!')
+                        } else {
+                          toast.error('Failed to upload image.')
+                        }
+                      } catch (error) {
+                        console.error('Image upload error:', error)
+                        toast.error('Error uploading image.')
                       }
                     }
                   }}
-                >
-                  {industries?.industries?.map(industry => (
-                    <MenuItem key={industry._id} value={industry._id}>
-                      {industry.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ marginTop: 2 }}>
-                {formData?.industryIds?.map((id, index) => {
-                  const industry = industries?.industries?.find(ind => ind._id === id)
-                  return (
-                    industry && (
-                      <Chip
-                        key={index}
-                        label={industry.name}
-                        onDelete={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            industryIds: prev.industryIds.filter(itemId => itemId !== id)
-                          }))
-                        }}
-                        sx={{ marginRight: 1, marginBottom: 1 }}
-                      />
-                    )
-                  )
-                })}
+                />
+                {formData.imageUrl && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt='Uploaded'
+                      style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <Button
+                      variant='contained'
+                      color='secondary'
+                      onClick={() =>
+                        setFormData(prevState => ({
+                          ...prevState,
+                          imageUrl
+                        }))
+                      }
+                    >
+                      Remove Image
+                    </Button>
+                  </Box>
+                )}
               </Box>
-            </Grid> */}
+            </Grid>
 
-            {/* <Grid item xs={12}>
-              <Typography variant='subtitle1'>Industries</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Button size='small' onClick={() => handleSelectAll('industry')}>
-                  Select All
-                </Button>
-                <Button size='small' onClick={() => handleDeselectAll('industry')}>
-                  Deselect All
-                </Button>
-              </Box>
-              <Box sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ccc', padding: 1 }}>
-                {industries?.industries?.map(industry => (
-                  <FormControlLabel
-                    key={industry._id}
-                    control={
-                      <Checkbox
-                        checked={formData.industryIds.includes(industry._id)}
-                        onChange={() => handleCheckboxChange('industry', industry._id)}
-                      />
-                    }
-                    label={industry.name}
-                  />
-                ))}
-              </Box>
-            </Grid> */}
             <Grid item xs={12}>
               <Typography variant='subtitle1'>Industries</Typography>
               <Button
@@ -845,87 +1005,6 @@ const MainPage = () => {
               </Box>
             </Grid>
 
-            {/* Function Select */}
-            {/* <Grid item xs={12}>
-              <Select
-                select
-                label='Function'
-                name='functionId'
-                value={formData.functionIds || []}
-                // onChange={handleInputChange}
-                onChange={e => {
-                  setFormData(prev => ({
-                    ...prev,
-                    functionIds: e.target.value // `value` will be an array in multi-select
-                  }))
-                  setTouchedFields(prev => ({ ...prev, functionIds: true })) // Mark as touched
-                }}
-                renderValue={
-                  selected =>
-                    selected
-                      .map(id => {
-                        const func = functions?.data?.find(f => f._id === id)
-                        return func ? func.name : ''
-                      })
-                      .join(', ') // Show selected function names
-                }
-                fullWidth
-                multiple
-                error={!isFormValid.functionId}
-                helperText={!isFormValid.functionId ? 'Function is required' : ''}
-              >
-                {functions?.data?.map(func => (
-                  <MenuItem key={func._id} value={func._id}>
-                    {func.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Box sx={{ marginTop: 2 }}>
-                {formData?.functionIds?.map((id, index) => {
-                  const func = functions?.data?.find(f => f._id === id)
-                  return (
-                    func && (
-                      <Chip
-                        key={index}
-                        label={func.name}
-                        onDelete={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            functionIds: prev.functionIds.filter(itemId => itemId !== id)
-                          }))
-                        }}
-                        sx={{ marginRight: 1, marginBottom: 1 }}
-                      />
-                    )
-                  )
-                })}
-              </Box>
-            </Grid> */}
-            {/* <Grid item xs={12}>
-              <Typography variant='subtitle1'>Functions</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Button size='small' onClick={() => handleSelectAll('function')}>
-                  Select All
-                </Button>
-                <Button size='small' onClick={() => handleDeselectAll('function')}>
-                  Deselect All
-                </Button>
-              </Box>
-              <Box sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ccc', padding: 1 }}>
-                {functions?.data?.map(func => (
-                  <FormControlLabel
-                    key={func._id}
-                    control={
-                      <Checkbox
-                        checked={formData.functionIds.includes(func._id)}
-                        onChange={() => handleCheckboxChange('function', func._id)}
-                      />
-                    }
-                    label={func.name}
-                  />
-                ))}
-              </Box>
-            </Grid> */}
             <Grid item xs={12}>
               <Typography variant='subtitle1'>Functions</Typography>
               <Button

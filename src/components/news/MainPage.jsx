@@ -30,7 +30,8 @@ import {
   CardContent,
   CardMedia,
   Card,
-  Pagination
+  Pagination,
+  Popover
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -67,6 +68,8 @@ const MainPage = () => {
     name: '',
     description: '',
     details: '', // For React Quill content
+    imageUrl: '',
+    category: '',
 
     tags: []
   })
@@ -110,6 +113,18 @@ const MainPage = () => {
     }, [value, onChange, debounce])
 
     return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
+  }
+  const [hoveredImage, setHoveredImage] = useState(null)
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleImageHover = (event, imageUrl) => {
+    setHoveredImage(imageUrl)
+    setAnchorEl(event.currentTarget) // Set the anchor element for the popover
+  }
+
+  const handleImageLeave = () => {
+    // setHoveredImage(null)
+    setAnchorEl(null) // Close the popover
   }
 
   useEffect(() => {
@@ -320,7 +335,8 @@ const MainPage = () => {
         name: industry.name,
         description: industry.description,
         details: industry.content || '', // If 'details' exist, otherwise set it as empty
-        // isImportant: industry.isImportant || false
+        imageUrl: industry.imageUrl || '',
+        category: industry.category || '',
         tags: industry.tags || [] //
       })
       setEditingIndex(industry._id) // Save the index or ID to track which industry is being edited
@@ -400,6 +416,8 @@ const MainPage = () => {
         name: formData.name,
         description: formData.description,
         content: formData.details,
+        category: formData.category,
+        imageUrl: formData.imageUrl,
         tags: formData.tags
       }
 
@@ -411,6 +429,8 @@ const MainPage = () => {
             name: formData.name,
             description: formData.description,
             content: formData.details,
+            imageUrl: formData.imageUrl,
+            category: formData.category,
             tags: formData.tags
           }
           // If we are editing, call the editIndustry API
@@ -536,6 +556,7 @@ const MainPage = () => {
               <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
               <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
               <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Details</TableCell>
+              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Image</TableCell>
               <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -584,6 +605,60 @@ const MainPage = () => {
                     >
                       View Details
                     </Button>
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
+                    <Box>
+                      <Box
+                        component='img'
+                        src={industry.imageUrl || 'n/a'}
+                        alt='Preview'
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          border: '1px solid #ddd',
+                          transition: 'transform 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                        onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                        onMouseLeave={handleImageLeave}
+                      />
+                    </Box>
+
+                    {/* Popover for Larger Image */}
+                    <Popover
+                      open={Boolean(anchorEl)}
+                      anchorEl={anchorEl}
+                      onClose={handleImageLeave}
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center'
+                      }}
+                      transformOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center'
+                      }}
+                      sx={{
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <Box
+                        component='img'
+                        src={hoveredImage}
+                        alt='Hovered Preview'
+                        sx={{
+                          width: 200,
+                          height: 200,
+                          objectFit: 'contain',
+                          borderRadius: '8px',
+                          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+                        }}
+                      />
+                    </Popover>
                   </TableCell>
                   <TableCell>
                     <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
@@ -640,6 +715,7 @@ const MainPage = () => {
         <DialogContent>
           <Grid container spacing={3}>
             {/* Industry Name Input */}
+
             <TextField
               label='News Name'
               name='name'
@@ -663,8 +739,141 @@ const MainPage = () => {
               error={touchedFields.name && !isFormValid.name} // Show error only if touched
               helperText={touchedFields.name && !isFormValid.description ? 'Description is required' : ''}
             />
+            {/* <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={async e => {
+                    const file = e.target.files[0]
+                    if (file) {
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+
+                        // Call the API to upload the file
+                        const response = await uploadFile(formData)
+                        if (response.status === 200) {
+                          const imageUrl = response.data.data.fileUrl
+                          console.log('Uploaded Image URL:', imageUrl)
+
+                          // Update formData with the uploaded image URL
+                          setFormData(prevState => ({
+                            ...prevState,
+                            imageUrl: imageUrl
+                          }))
+
+                          toast.success('Image uploaded successfully!')
+                        } else {
+                          toast.error('Failed to upload image.')
+                        }
+                      } catch (error) {
+                        console.error('Image upload error:', error)
+                        toast.error('Error uploading image.')
+                      }
+                    }
+                  }}
+                />
+                {formData.imageUrl && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt='Uploaded'
+                      style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <Button
+                      variant='contained'
+                      color='secondary'
+                      onClick={() =>
+                        setFormData(prevState => ({
+                          ...prevState,
+                          imageUrl
+                        }))
+                      }
+                    >
+                      Remove Image
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </Grid> */}
             <Grid item xs={12}>
-              <Button onClick={handleAddTag} variant='outlined'>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Custom-styled file input */}
+                <Button
+                  variant='contained'
+                  component='label'
+                  sx={{
+                    background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%)',
+                    color: 'white',
+                    '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' },
+                    textTransform: 'none' // Avoid uppercase text
+                  }}
+                >
+                  Upload Image
+                  <input
+                    type='file'
+                    accept='image/*'
+                    hidden // Hides the actual file input
+                    onChange={async e => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        try {
+                          const formData = new FormData()
+                          formData.append('file', file)
+
+                          // Call the API to upload the file
+                          const response = await uploadFile(formData)
+                          if (response.status === 200) {
+                            const imageUrl = response.data.data.fileUrl
+                            console.log('Uploaded Image URL:', imageUrl)
+
+                            // Update formData with the uploaded image URL
+                            setFormData(prevState => ({
+                              ...prevState,
+                              imageUrl
+                            }))
+
+                            toast.success('Image uploaded successfully!')
+                          } else {
+                            toast.error('Failed to upload image.')
+                          }
+                        } catch (error) {
+                          console.error('Image upload error:', error)
+                          toast.error('Error uploading image.')
+                        }
+                      }
+                    }}
+                  />
+                </Button>
+
+                {/* Display the uploaded image preview */}
+                {formData.imageUrl && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt='Uploaded'
+                      style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <Button
+                      variant='contained'
+                      color='secondary'
+                      onClick={() =>
+                        setFormData(prevState => ({
+                          ...prevState,
+                          imageUrl: ''
+                        }))
+                      }
+                    >
+                      Remove Image
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button sx={{ marginTop: 2 }} onClick={handleAddTag} variant='outlined'>
                 Add Tag
               </Button>
               {formData?.tags?.map((tag, index) => (
@@ -683,7 +892,16 @@ const MainPage = () => {
                 </Box>
               ))}
             </Grid>
-
+            <Grid item xs={12}>
+              <TextField
+                label='Category'
+                fullWidth
+                margin='normal'
+                name='category'
+                onChange={handleInputChange}
+                value={formData.category}
+              />
+            </Grid>
             {/* React Quill Editor for Details */}
             <Grid item xs={12}>
               <Box sx={{ marginTop: 2 }}>

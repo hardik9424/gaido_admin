@@ -94,3 +94,10 @@ export const deleteNews = data => axios('admin/auth/deletenews', 'DELETE', data)
 // block/un apis
 export const blockUser = data => axios('admin/auth/blockuser', 'PUT', data)
 export const unBlockUser = data => axios('admin/auth/unblockuser', 'PUT',data)
+
+// api for csv
+export const uploadCsv = data=>axios('admin/auth/industry/import', 'POST', data, true)
+
+export const uploadFunctionCsv = data=>axios('admin/auth/function/import', 'POST', data, true)
+
+export const uploadJobCsv = data=>axios('admin/auth/job/import', 'POST', data, true)

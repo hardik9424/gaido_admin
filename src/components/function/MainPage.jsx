@@ -4,6 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+
+import { SketchPicker } from 'react-color'
+
+import { AddCircleOutline, ColorLens as ColorLensIcon } from '@mui/icons-material'
+
 import {
   Box,
   Button,
@@ -30,7 +35,9 @@ import {
   CardContent,
   CardMedia,
   Card,
-  Pagination
+  Pagination,
+  Popover,
+  Typography
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -64,7 +71,9 @@ import {
   deleteFunction,
   editFunction,
   uploadFile,
-  adminDetails
+  adminDetails,
+  uploadCsv,
+  uploadFunctionCsv
 } from '@/app/api'
 import CustomTextField from '@/@core/components/mui/TextField'
 
@@ -73,6 +82,8 @@ const MainPage = () => {
     name: '',
     description: '',
     details: '', // For React Quill content
+    color: '',
+    imageUrl: '',
     isImportant: false
   })
 
@@ -116,6 +127,22 @@ const MainPage = () => {
     }, [value, onChange, debounce])
 
     return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
+  }
+  const [colorPickerAnchor, setColorPickerAnchor] = useState(null) // Anchor for Popover
+  const handleOpenColorPicker = event => setColorPickerAnchor(event.currentTarget)
+  const handleCloseColorPicker = () => setColorPickerAnchor(null)
+  const isColorPickerOpen = Boolean(colorPickerAnchor)
+  const [hoveredImage, setHoveredImage] = useState(null)
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleImageHover = (event, imageUrl) => {
+    setHoveredImage(imageUrl)
+    setAnchorEl(event.currentTarget) // Set the anchor element for the popover
+  }
+
+  const handleImageLeave = () => {
+    // setHoveredImage(null)
+    setAnchorEl(null) // Close the popover
   }
 
   useEffect(() => {
@@ -205,7 +232,9 @@ const MainPage = () => {
       const payload = {
         name: formData.name,
         description: formData.description,
-        htmlContent: formData.details
+        htmlContent: formData.details,
+        color: formData.color,
+        imageUrl: formData.imageUrl
       }
 
       try {
@@ -215,7 +244,9 @@ const MainPage = () => {
             _id: editingIndex,
             name: formData.name,
             description: formData.description,
-            htmlContent: formData.details
+            htmlContent: formData.details,
+            color: formData.color,
+            imageUrl: formData.imageUrl
           }
           // If we are editing, call the editIndustry API
           response = await editFunction(editedPayload)
@@ -269,7 +300,9 @@ const MainPage = () => {
       setFormData({
         name: industry.name,
         description: industry.description,
-        details: industry.htmlContent || '' // If 'details' exist, otherwise set it as empty
+        details: industry.htmlContent || '', // If 'details' exist, otherwise set it as empty
+        color: industry.color || '',
+        imageUrl: industry.imageUrl || ''
         // isImportant: industry.isImportant || false
       })
       setEditingIndex(industry._id)
@@ -426,6 +459,25 @@ const MainPage = () => {
       return updatedFormData
     })
   }
+  const handleImportCSV = async event => {
+    const file = event?.target?.files[0] // Get the selected file
+    console.log('file', file)
+
+    if (file) {
+      const formData = new FormData()
+      formData.append('file', file) // Add the file to FormData
+
+      try {
+        const response = await uploadFunctionCsv(formData)
+        console.log('CSV Upload Response:', response)
+      } catch (error) {
+        console.error('Error uploading CSV:', error)
+        toast.error('An error occurred while importing the CSV.')
+      }
+    } else {
+      toast.error('Please select a valid CSV file.')
+    }
+  }
 
   return (
     <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
@@ -471,6 +523,7 @@ const MainPage = () => {
           </Button>
         }
       />
+
       <Box sx={{ paddingBottom: 6 }}>
         <DebouncedInput
           value={globalFilter ?? ''}
@@ -479,6 +532,21 @@ const MainPage = () => {
           placeholder='Search Function'
         />
       </Box>
+      <Button
+        variant='contained'
+        component='label'
+        sx={{
+          fontSize: 'small',
+          background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)',
+          color: 'white',
+          '&:hover': { background: 'linear-gradient(90deg, #2E7D32, #155B47)' },
+          minWidth: '150px',
+          height: '30px'
+        }}
+      >
+        Import CSV
+        <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
+      </Button>
 
       {/* Industry List Table */}
       <TableContainer component={Paper} sx={{ marginTop: 4 }}>
@@ -498,10 +566,12 @@ const MainPage = () => {
                 }
               }}
             >
-              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Details</TableCell>
-              <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
+              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -555,7 +625,77 @@ const MainPage = () => {
                       </IconButton>
                     </Tooltip>
                   </TableCell> */}
+                  <TableCell>
+                    <Box>
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: industry.color || '#ccc',
+                          border: '1px solid #ddd',
+                          marginBottom: 1
+                        }}
+                      />
+                      <Typography variant='caption' sx={{ textAlign: 'center' }}>
+                        {industry.color || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
+                    <Box>
+                      <Box
+                        component='img'
+                        src={industry.imageUrl || 'n/a'}
+                        alt='Preview'
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          border: '1px solid #ddd',
+                          transition: 'transform 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                        onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                        onMouseLeave={handleImageLeave}
+                      />
+                    </Box>
 
+                    {/* Popover for Larger Image */}
+                    <Popover
+                      open={Boolean(anchorEl)}
+                      anchorEl={anchorEl}
+                      onClose={handleImageLeave}
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center'
+                      }}
+                      transformOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center'
+                      }}
+                      sx={{
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <Box
+                        component='img'
+                        src={hoveredImage}
+                        alt='Hovered Preview'
+                        sx={{
+                          width: 200,
+                          height: 200,
+                          objectFit: 'contain',
+                          borderRadius: '8px',
+                          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+                        }}
+                      />
+                    </Popover>
+                  </TableCell>
                   <TableCell>
                     <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
                       <EditIcon />
@@ -607,34 +747,303 @@ const MainPage = () => {
 
       {/* Modal for Add/Edit Industry */}
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
-        <DialogTitle>{editingIndex !== null ? 'Edit Industry' : 'Add Industry'}</DialogTitle>
+        {/* <DialogTitle>{editingIndex !== null ? 'Edit Industry' : 'Add Industry'}</DialogTitle>
+         */}
+        <DialogTitle>
+          <Box display='flex' alignItems='center' gap={1.5}>
+            {/* Conditional Icon */}
+            {editingIndex !== null ? <EditIcon color='primary' /> : <AddCircleOutline color='success' />}
+            <Box>
+              {/* Title */}
+              <Typography variant='h5' component='span'>
+                {editingIndex !== null ? 'Edit Industry' : 'Add Industry'}
+              </Typography>
+              {/* Subtitle */}
+              <Typography variant='subtitle2' sx={{ color: 'gray', marginTop: 0.5, fontStyle: 'italic' }}>
+                {editingIndex !== null
+                  ? 'Modify details like name, color, and more.'
+                  : 'Fill in the details like name, color, and description to create a new industry.'}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
             {/* Industry Name Input */}
-            <TextField
-              label='Function Name'
-              name='name'
-              value={formData.name}
-              onChange={handleInputChange}
-              fullWidth
-              margin='normal'
-              error={touchedFields.name && !isFormValid.name} // Show error only if touched
-              helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''}
-            />
+            <Grid item xs={12}>
+              <TextField
+                label='Function Name'
+                name='name'
+                value={formData.name}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+                error={touchedFields.name && !isFormValid.name} // Show error only if touched
+                helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''}
+              />
+            </Grid>
             {/* Industry Description Input */}
-            <TextField
-              label='Funtion Description'
-              name='description'
-              value={formData.description}
-              onChange={handleInputChange}
-              fullWidth
-              margin='normal'
-              multiline
-              rows={4}
-              error={touchedFields.description && !isFormValid.description} // Show error only if touched
-              helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
-            />
-            {/* Checkbox for Important */}
+            <Grid item xs={12}>
+              <TextField
+                label='Funtion Description'
+                name='description'
+                value={formData.description}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+                multiline
+                rows={4}
+                error={touchedFields.description && !isFormValid.description} // Show error only if touched
+                helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
+              />
+            </Grid>
+            {/* color picker */}
+            {/* <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <TextField
+                  label='Selected Color'
+                  name='BackgroundColor'
+                  value={formData.color}
+                  onChange={handleInputChange}
+                  fullWidth={false}
+                  margin='normal'
+                  sx={{ maxWidth: 200 }}
+                  InputProps={{
+                    style: {
+                      backgroundColor: formData.color, // Set background color
+                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    }
+                  }}
+                />
+                <IconButton
+                  onClick={handleOpenColorPicker}
+                  sx={{
+                    backgroundColor: formData.color || '#f5f5f5',
+                    border: '1px solid #ddd',
+                    '&:hover': { backgroundColor: formData.color || '#e0e0e0' }
+                  }}
+                >
+                  <ColorLensIcon sx={{ color: formData.color === '#ffffff' ? '#000' : '#fff' }} />
+                </IconButton>
+                <Popover
+                  open={isColorPickerOpen}
+                  anchorEl={colorPickerAnchor}
+                  onClose={handleCloseColorPicker}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                >
+                  <SketchPicker
+                    color={formData.color || '#ffffff'}
+                    onChangeComplete={color => {
+                      setFormData(prevState => ({
+                        ...prevState,
+                        color: color.hex // Update the color in state
+                      }))
+                    }}
+                    disableAlpha // Disable the alpha slider if transparency isn't needed
+                  />
+                </Popover>
+              </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                Pick a Theme Color
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Color Preview */}
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    backgroundColor: formData.color || '#ddd',
+                    border: '2px solid #ccc',
+                    boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={handleOpenColorPicker} // Click to open the picker
+                />
+                {/* Hidden Color Input */}
+                <TextField
+                  label='Hex Color Code'
+                  name='color'
+                  value={formData.color}
+                  onChange={handleInputChange}
+                  fullWidth={false}
+                  margin='normal'
+                  sx={{ maxWidth: 200 }}
+                  InputProps={{
+                    style: {
+                      backgroundColor: formData.color, // Set background color
+                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    }
+                  }}
+                />
+                <Popover
+                  open={isColorPickerOpen}
+                  anchorEl={colorPickerAnchor}
+                  onClose={handleCloseColorPicker}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                >
+                  <SketchPicker
+                    color={formData.color || '#ffffff'}
+                    onChangeComplete={color => {
+                      setFormData(prevState => ({
+                        ...prevState,
+                        color: color.hex // Update the color in state
+                      }))
+                    }}
+                    disableAlpha // Remove alpha slider for simplicity
+                  />
+                </Popover>
+              </Box>
+            </Grid>
+
+            {/* Industry Image Input */}
+            {/* <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={async e => {
+                    const file = e.target.files[0] // Get the selected file
+                    if (file) {
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+
+                        // Call the API to upload the file
+                        const response = await uploadFile(formData)
+                        if (response.status === 200) {
+                          const imageUrl = response.data.data.fileUrl
+                          console.log('Uploaded Image URL:', imageUrl)
+
+                          // Update formData with the uploaded image URL
+                          setFormData(prevState => ({
+                            ...prevState,
+                            imageUrl: imageUrl
+                          }))
+
+                          toast.success('Image uploaded successfully!')
+                        } else {
+                          toast.error('Failed to upload image.')
+                        }
+                      } catch (error) {
+                        console.error('Image upload error:', error)
+                        toast.error('Error uploading image.')
+                      }
+                    }
+                  }}
+                />
+                {formData?.imageUrl && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={formData?.imageUrl}
+                      alt='Uploaded'
+                      style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <Button
+                      variant='contained'
+                      color='secondary'
+                      onClick={() =>
+                        setFormData(prevState => ({
+                          ...prevState,
+                          imageUrl: ''
+                        }))
+                      }
+                    >
+                      Remove Image
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                Upload Function Image
+              </Typography>
+              <Box
+                sx={{
+                  border: '2px dashed #ccc',
+                  borderRadius: '8px',
+                  padding: 2,
+                  textAlign: 'center',
+                  position: 'relative',
+                  backgroundColor: '#f9f9f9',
+                  '&:hover': {
+                    borderColor: '#11817B',
+                    backgroundColor: '#f1f1f1'
+                  }
+                }}
+              >
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={async e => {
+                    const file = e.target.files[0] // Get the selected file
+                    if (file) {
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        // Call the API to upload the file
+                        const response = await uploadFile(formData)
+                        if (response.status === 200) {
+                          const imageUrl = response.data.data.fileUrl
+                          setFormData(prevState => ({
+                            ...prevState,
+                            imageUrl
+                          }))
+                          toast.success('Image uploaded successfully!')
+                        } else {
+                          toast.error('Failed to upload image.')
+                        }
+                      } catch (error) {
+                        console.error('Image upload error:', error)
+                        toast.error('Error uploading image.')
+                      }
+                    }
+                  }}
+                  style={{
+                    opacity: 0,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <Typography variant='body2' sx={{ color: '#888' }}>
+                  Drag & drop or click to upload an image
+                </Typography>
+              </Box>
+              {formData.imageUrl && (
+                <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <img
+                    src={formData.imageUrl}
+                    alt='Uploaded'
+                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <Button
+                    variant='outlined'
+                    color='secondary'
+                    onClick={() =>
+                      setFormData(prevState => ({
+                        ...prevState,
+                        imageUrl: ''
+                      }))
+                    }
+                  >
+                    Remove Image
+                  </Button>
+                </Box>
+              )}
+            </Grid>
 
             {/* React Quill Editor for Details */}
             <Grid item xs={12}>
