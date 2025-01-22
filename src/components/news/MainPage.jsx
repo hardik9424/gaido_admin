@@ -553,11 +553,11 @@ const MainPage = () => {
                 }
               }}
             >
-              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Details</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Image</TableCell>
-              <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Description</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Details</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Image</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -711,7 +711,7 @@ const MainPage = () => {
 
       {/* Modal for Add/Edit Industry */}
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
-        <DialogTitle>{editingIndex !== null ? 'Edit Industry' : 'Add Industry'}</DialogTitle>
+        <DialogTitle>{editingIndex !== null ? 'Edit News' : 'Add News'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
             {/* Industry Name Input */}

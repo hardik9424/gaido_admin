@@ -519,476 +519,447 @@ const MainPage = () => {
   }
 
   return (
-    <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
-      <ToastContainer />
-      {loading && (
-        <LinearProgress
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1400,
-            backgroundColor: 'rgba(17, 129, 123, 0.2)',
-            '& .MuiLinearProgress-bar': {
-              background: 'linear-gradient(270deg, rgba(10, 129, 123, 0.7) 0%, #11817B 100%)' // Gradient for the progress bar
-            }
-          }}
-          variant='indeterminate'
-        />
-      )}
-
-      <CardHeader
-        avatar={<Apartment fontSize='large' color='info' />}
-        title='Function Management'
-        titleTypographyProps={{
-          variant: 'h5',
-          fontWeight: 'bold'
-        }}
-        subheader='Add, edit, or delete functions'
-        action={
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={() => handleOpenModal()}
+    <>
+      <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+        <ToastContainer />
+        {loading && (
+          <LinearProgress
             sx={{
-              background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
-              color: 'white',
-              '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1400,
+              backgroundColor: 'rgba(17, 129, 123, 0.2)',
+              '& .MuiLinearProgress-bar': {
+                background: 'linear-gradient(270deg, rgba(10, 129, 123, 0.7) 0%, #11817B 100%)' // Gradient for the progress bar
+              }
             }}
-            disabled={!permissions?.create}
-          >
-            Add Function
-          </Button>
-        }
-      />
-
-      <Box sx={{ paddingBottom: 6 }}>
-        <DebouncedInput
-          value={globalFilter ?? ''}
-          // onChange={value => setGlobalFilter(String(value))}
-          onChange={handleSearch}
-          placeholder='Search Function'
-        />
-      </Box>
-      <Button
-        variant='text'
-        component='label'
-        sx={{
-          fontSize: 'small',
-          background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)',
-          color: 'white',
-          '&:hover': { background: 'linear-gradient(90deg, #2E7D32, #155B47)' },
-          minWidth: '150px',
-          height: '30px'
-        }}
-        startIcon={<UploadFile />}
-      >
-        Import CSV
-        <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
-      </Button>
-
-      {/* Industry List Table */}
-      <TableContainer component={Paper} sx={{ marginTop: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: '#E0E0E0,',
-                '&:hover': {
-                  backgroundColor: '#E0E0E0',
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
-                  cursor: 'pointer',
-                  '& td': {
-                    transform: 'scale(0.95)',
-                    transition: 'transform 0.3s ease'
-                  }
-                }
-              }}
-            >
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {industryLists?.data
-              ?.filter(fun => fun?.name?.toLowerCase().includes(globalFilter.toLowerCase()))
-              .map((industry, index) => (
-                <TableRow
-                  key={index}
-                  sx={{
-                    backgroundColor: '#E0E0E0,',
-                    '&:hover': {
-                      backgroundColor: '#E0E0E0',
-                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
-                      cursor: 'pointer',
-                      '& td': {
-                        transform: 'scale(0.95)',
-                        transition: 'transform 0.3s ease'
-                      }
-                    }
-                  }}
-                >
-                  <TableCell>
-                    <Tooltip title={industry.name.length > 20 ? industry.name : ''}>
-                      <span>{industry.name.length > 20 ? `${industry.name.substring(0, 20)}...` : industry.name}</span>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title={industry?.description?.length > 20 ? industry.description : ''}>
-                      <span>
-                        {industry?.description?.length > 2 ? `${industry.description.substring(0, 20)}...` : 'n/a'}
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant='outlined'
-                      sx={{
-                        background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
-                        color: 'white',
-                        '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
-                      }}
-                      onClick={() => handleViewDetails(industry)}
-                    >
-                      View Details
-                    </Button>
-                  </TableCell>
-                  {/* <TableCell>
-                    <Tooltip title='View Details'>
-                      <IconButton color='primary' onClick={() => handleViewDetails(industry)}>
-                        <Description />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell> */}
-                  <TableCell>
-                    <Box>
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          backgroundColor: industry.color || '#ccc',
-                          border: '1px solid #ddd',
-                          marginBottom: 1
-                        }}
-                      />
-                      <Typography variant='caption' sx={{ textAlign: 'center' }}>
-                        {industry.color || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
-                    <Box>
-                      <Box
-                        component='img'
-                        src={industry.imageUrl || 'n/a'}
-                        alt='Preview'
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          objectFit: 'cover',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          border: '1px solid #ddd',
-                          transition: 'transform 0.2s',
-                          '&:hover': {
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                        onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
-                        onMouseLeave={handleImageLeave}
-                      />
-                    </Box>
-
-                    {/* Popover for Larger Image */}
-                    <Popover
-                      open={Boolean(anchorEl)}
-                      anchorEl={anchorEl}
-                      onClose={handleImageLeave}
-                      anchorOrigin={{
-                        vertical: 'top',
-                        horizontal: 'center'
-                      }}
-                      transformOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'center'
-                      }}
-                      sx={{
-                        pointerEvents: 'none'
-                      }}
-                    >
-                      <Box
-                        component='img'
-                        src={hoveredImage}
-                        alt='Hovered Preview'
-                        sx={{
-                          width: 200,
-                          height: 200,
-                          objectFit: 'contain',
-                          borderRadius: '8px',
-                          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
-                        }}
-                      />
-                    </Popover>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton disabled={!permissions?.edit} color='primary' onClick={() => handleOpenModal(industry)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton disabled={!permissions?.edit} color='secondary' onClick={() => handleDelete(industry)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Pagination Controls */}
-
-      <Box sx={{ marginTop: 3 }}>
-        <Pagination
-          count={Math.ceil(totalItems / rowsPerPage)}
-          page={page} // Show the current page (1-indexed)
-          onChange={handleChangePage}
-          // color='primary'
-
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: 2,
-            '& .Mui-selected': {
-              backgroundColor: 'green', // Green background for selected page
-              color: 'green' // White text for selected page
+            variant='indeterminate'
+          />
+        )}
+        <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+          <CardHeader
+            avatar={<Apartment fontSize='large' color='info' />}
+            title='Function Management'
+            titleTypographyProps={{
+              variant: 'h5',
+              fontWeight: 'bold'
+            }}
+            subheader='Add, edit, or delete functions'
+            action={
+              <Button
+                variant='contained'
+                color='primary'
+                onClick={() => handleOpenModal()}
+                sx={{
+                  background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                  color: 'white',
+                  '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+                }}
+                disabled={!permissions?.create}
+              >
+                Add Function
+              </Button>
             }
-          }}
-        />
-      </Box>
+          />
 
-      {/* Confirmation Dialog for Delete */}
-      <Dialog open={deleteConfirmOpen} onClose={cancelDelete} maxWidth='xs' fullWidth>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>Are you sure you want to delete this function?</DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDelete} color='secondary' variant='outlined'>
-            Cancel
+          <Button
+            variant='text'
+            component='label'
+            sx={{
+              fontSize: 'small',
+              marginLeft: 210
+            }}
+            startIcon={<UploadFile />}
+          >
+            Import CSV
+            <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
           </Button>
-          <Button onClick={confirmDelete} color='primary' variant='contained'>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
 
-      {/* Modal for Add/Edit Industry */}
-      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
-        {/* <DialogTitle>{editingIndex !== null ? 'Edit Industry' : 'Add Industry'}</DialogTitle>
-         */}
-        <DialogTitle>
-          <Box display='flex' alignItems='center' gap={1.5}>
-            {/* Conditional Icon */}
-            {editingIndex !== null ? <EditIcon color='primary' /> : <AddCircleOutline color='success' />}
-            <Box>
-              {/* Title */}
-              <Typography variant='h5' component='span'>
-                {editingIndex !== null ? 'Edit Industry' : 'Add Industry'}
-              </Typography>
-              {/* Subtitle */}
-              <Typography variant='subtitle2' sx={{ color: 'gray', marginTop: 0.5, fontStyle: 'italic' }}>
-                {editingIndex !== null
-                  ? 'Modify details like name, color, and more.'
-                  : 'Fill in the details like name, color, and description to create a new industry.'}
-              </Typography>
-            </Box>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={3}>
-            {/* Industry Name Input */}
-            <Grid item xs={12}>
-              <TextField
-                label='Function Name'
-                name='name'
-                value={formData.name}
-                onChange={handleInputChange}
-                fullWidth
-                margin='normal'
-                error={touchedFields.name && !isFormValid.name} // Show error only if touched
-                helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''}
-              />
-            </Grid>
-            {/* Industry Description Input */}
-            <Grid item xs={12}>
-              <TextField
-                label='Funtion Description'
-                name='description'
-                value={formData.description}
-                onChange={handleInputChange}
-                fullWidth
-                margin='normal'
-                multiline
-                rows={4}
-                error={touchedFields.description && !isFormValid.description} // Show error only if touched
-                helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
-              />
-            </Grid>
-            {/* color picker */}
-            {/* <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TextField
-                  label='Selected Color'
-                  name='BackgroundColor'
-                  value={formData.color}
-                  onChange={handleInputChange}
-                  fullWidth={false}
-                  margin='normal'
-                  sx={{ maxWidth: 200 }}
-                  InputProps={{
-                    style: {
-                      backgroundColor: formData.color, // Set background color
-                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+        {/* Industry List Table */}
+        <TableContainer component={Paper} sx={{ marginTop: 4 }}>
+          <Table>
+            <TableHead>
+              <TableRow
+                sx={{
+                  backgroundColor: '#E0E0E0,',
+                  '&:hover': {
+                    backgroundColor: '#E0E0E0',
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                    cursor: 'pointer',
+                    '& td': {
+                      transform: 'scale(0.95)',
+                      transition: 'transform 0.3s ease'
                     }
-                  }}
-                />
-                <IconButton
-                  onClick={handleOpenColorPicker}
-                  sx={{
-                    backgroundColor: formData.color || '#f5f5f5',
-                    border: '1px solid #ddd',
-                    '&:hover': { backgroundColor: formData.color || '#e0e0e0' }
-                  }}
-                >
-                  <ColorLensIcon sx={{ color: formData.color === '#ffffff' ? '#000' : '#fff' }} />
-                </IconButton>
-                <Popover
-                  open={isColorPickerOpen}
-                  anchorEl={colorPickerAnchor}
-                  onClose={handleCloseColorPicker}
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left'
-                  }}
-                >
-                  <SketchPicker
-                    color={formData.color || '#ffffff'}
-                    onChangeComplete={color => {
-                      setFormData(prevState => ({
-                        ...prevState,
-                        color: color.hex // Update the color in state
-                      }))
+                  }
+                }}
+              >
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {industryLists?.data
+                ?.filter(fun => fun?.name?.toLowerCase().includes(globalFilter.toLowerCase()))
+                .map((industry, index) => (
+                  <TableRow
+                    key={index}
+                    sx={{
+                      backgroundColor: '#E0E0E0,',
+                      '&:hover': {
+                        backgroundColor: '#E0E0E0',
+                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                        cursor: 'pointer',
+                        '& td': {
+                          transform: 'scale(0.95)',
+                          transition: 'transform 0.3s ease'
+                        }
+                      }
                     }}
-                    disableAlpha // Disable the alpha slider if transparency isn't needed
-                  />
-                </Popover>
+                  >
+                    <TableCell>
+                      <Tooltip title={industry.name.length > 20 ? industry.name : ''}>
+                        <span>
+                          {industry.name.length > 20 ? `${industry.name.substring(0, 20)}...` : industry.name}
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title={industry?.description?.length > 20 ? industry.description : ''}>
+                        <span>
+                          {industry?.description?.length > 2 ? `${industry.description.substring(0, 20)}...` : 'n/a'}
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant='outlined'
+                        sx={{
+                          background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                          color: 'white',
+                          '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+                        }}
+                        onClick={() => handleViewDetails(industry)}
+                      >
+                        View Details
+                      </Button>
+                    </TableCell>
+
+                    <TableCell>
+                      <Box>
+                        <Box
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            backgroundColor: industry.color || '#ccc',
+                            border: '1px solid #ddd',
+                            marginBottom: 1
+                          }}
+                        />
+                        <Typography variant='caption' sx={{ textAlign: 'center' }}>
+                          {industry.color || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
+                      <Box>
+                        <Box
+                          component='img'
+                          src={industry.imageUrl || 'n/a'}
+                          alt='Preview'
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            border: '1px solid #ddd',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)'
+                            }
+                          }}
+                          onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                          onMouseLeave={handleImageLeave}
+                        />
+                      </Box>
+
+                      {/* Popover for Larger Image */}
+                      <Popover
+                        open={Boolean(anchorEl)}
+                        anchorEl={anchorEl}
+                        onClose={handleImageLeave}
+                        anchorOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center'
+                        }}
+                        transformOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'center'
+                        }}
+                        sx={{
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <Box
+                          component='img'
+                          src={hoveredImage}
+                          alt='Hovered Preview'
+                          sx={{
+                            width: 200,
+                            height: 200,
+                            objectFit: 'contain',
+                            borderRadius: '8px',
+                            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+                          }}
+                        />
+                      </Popover>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        disabled={!permissions?.edit}
+                        color='primary'
+                        onClick={() => handleOpenModal(industry)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        disabled={!permissions?.edit}
+                        color='secondary'
+                        onClick={() => handleDelete(industry)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Pagination Controls */}
+
+        <Box sx={{ marginTop: 3 }}>
+          <Pagination
+            count={Math.ceil(totalItems / rowsPerPage)}
+            page={page} // Show the current page (1-indexed)
+            onChange={handleChangePage}
+            // color='primary'
+
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: 2,
+              '& .Mui-selected': {
+                backgroundColor: 'green', // Green background for selected page
+                color: 'green' // White text for selected page
+              }
+            }}
+          />
+        </Box>
+
+        {/* Confirmation Dialog for Delete */}
+        <Dialog open={deleteConfirmOpen} onClose={cancelDelete} maxWidth='xs' fullWidth>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>Are you sure you want to delete this function?</DialogContent>
+          <DialogActions>
+            <Button onClick={cancelDelete} color='secondary' variant='outlined'>
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} color='primary' variant='contained'>
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal for Add/Edit Industry */}
+        <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
+          {/* <DialogTitle>{editingIndex !== null ? 'Edit Industry' : 'Add Industry'}</DialogTitle>
+           */}
+          <DialogTitle>
+            <Box display='flex' alignItems='center' gap={1.5}>
+              {/* Conditional Icon */}
+              {editingIndex !== null ? <EditIcon color='primary' /> : <AddCircleOutline color='success' />}
+              <Box>
+                {/* Title */}
+                <Typography variant='h5' component='span'>
+                  {editingIndex !== null ? 'Edit Industry' : 'Add Funtion'}
+                </Typography>
+                {/* Subtitle */}
+                <Typography variant='subtitle2' sx={{ color: 'gray', marginTop: 0.5, fontStyle: 'italic' }}>
+                  {editingIndex !== null
+                    ? 'Modify details like name, color, and more.'
+                    : 'Fill in the details like name, color, and description to create a new industry.'}
+                </Typography>
               </Box>
-            </Grid> */}
-            <Grid item xs={12}>
-              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
-                Pick a Theme Color
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* Color Preview */}
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3}>
+              {/* Industry Name Input */}
+              <Grid item xs={12}>
+                <TextField
+                  label='Function Name'
+                  name='name'
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin='normal'
+                  error={touchedFields.name && !isFormValid.name} // Show error only if touched
+                  helperText={touchedFields.name && !isFormValid.name ? 'Name is required' : ''}
+                />
+              </Grid>
+              {/* Industry Description Input */}
+              <Grid item xs={12}>
+                <TextField
+                  label='Funtion Description'
+                  name='description'
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin='normal'
+                  multiline
+                  rows={4}
+                  error={touchedFields.description && !isFormValid.description} // Show error only if touched
+                  helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
+                />
+              </Grid>
+              {/* color picker */}
+
+              <Grid item xs={12}>
+                <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                  Pick a Theme Color
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {/* Color Preview */}
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      backgroundColor: formData.color || '#ddd',
+                      border: '2px solid #ccc',
+                      boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={handleOpenColorPicker} // Click to open the picker
+                  />
+                  {/* Hidden Color Input */}
+                  <TextField
+                    label='Hex Color Code'
+                    name='color'
+                    value={formData.color}
+                    onChange={handleInputChange}
+                    fullWidth={false}
+                    margin='normal'
+                    sx={{ maxWidth: 200 }}
+                    InputProps={{
+                      style: {
+                        backgroundColor: formData.color, // Set background color
+                        color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                      }
+                    }}
+                  />
+                  <Popover
+                    open={isColorPickerOpen}
+                    anchorEl={colorPickerAnchor}
+                    onClose={handleCloseColorPicker}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'left'
+                    }}
+                  >
+                    <SketchPicker
+                      color={formData.color || '#ffffff'}
+                      onChangeComplete={color => {
+                        setFormData(prevState => ({
+                          ...prevState,
+                          color: color.hex // Update the color in state
+                        }))
+                      }}
+                      disableAlpha // Remove alpha slider for simplicity
+                    />
+                  </Popover>
+                </Box>
+              </Grid>
+
+              {/* Industry Image Input */}
+
+              <Grid item xs={12}>
+                <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                  Upload Function Image
+                </Typography>
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    backgroundColor: formData.color || '#ddd',
-                    border: '2px solid #ccc',
-                    boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
-                    cursor: 'pointer'
-                  }}
-                  onClick={handleOpenColorPicker} // Click to open the picker
-                />
-                {/* Hidden Color Input */}
-                <TextField
-                  label='Hex Color Code'
-                  name='color'
-                  value={formData.color}
-                  onChange={handleInputChange}
-                  fullWidth={false}
-                  margin='normal'
-                  sx={{ maxWidth: 200 }}
-                  InputProps={{
-                    style: {
-                      backgroundColor: formData.color, // Set background color
-                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    border: '2px dashed #ccc',
+                    borderRadius: '8px',
+                    padding: 2,
+                    textAlign: 'center',
+                    position: 'relative',
+                    backgroundColor: '#f9f9f9',
+                    '&:hover': {
+                      borderColor: '#11817B',
+                      backgroundColor: '#f1f1f1'
                     }
-                  }}
-                />
-                <Popover
-                  open={isColorPickerOpen}
-                  anchorEl={colorPickerAnchor}
-                  onClose={handleCloseColorPicker}
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left'
                   }}
                 >
-                  <SketchPicker
-                    color={formData.color || '#ffffff'}
-                    onChangeComplete={color => {
-                      setFormData(prevState => ({
-                        ...prevState,
-                        color: color.hex // Update the color in state
-                      }))
-                    }}
-                    disableAlpha // Remove alpha slider for simplicity
-                  />
-                </Popover>
-              </Box>
-            </Grid>
-
-            {/* Industry Image Input */}
-            {/* <Grid item xs={12}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={async e => {
-                    const file = e.target.files[0] // Get the selected file
-                    if (file) {
-                      try {
-                        const formData = new FormData()
-                        formData.append('file', file)
-
-                        // Call the API to upload the file
-                        const response = await uploadFile(formData)
-                        if (response.status === 200) {
-                          const imageUrl = response.data.data.fileUrl
-                          console.log('Uploaded Image URL:', imageUrl)
-
-                          // Update formData with the uploaded image URL
-                          setFormData(prevState => ({
-                            ...prevState,
-                            imageUrl: imageUrl
-                          }))
-
-                          toast.success('Image uploaded successfully!')
-                        } else {
-                          toast.error('Failed to upload image.')
+                  <input
+                    type='file'
+                    accept='image/*'
+                    onChange={async e => {
+                      const file = e.target.files[0] // Get the selected file
+                      if (file) {
+                        try {
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          // Call the API to upload the file
+                          const response = await uploadFile(formData)
+                          if (response.status === 200) {
+                            const imageUrl = response.data.data.fileUrl
+                            setFormData(prevState => ({
+                              ...prevState,
+                              imageUrl
+                            }))
+                            toast.success('Image uploaded successfully!')
+                          } else {
+                            toast.error('Failed to upload image.')
+                          }
+                        } catch (error) {
+                          console.error('Image upload error:', error)
+                          toast.error('Error uploading image.')
                         }
-                      } catch (error) {
-                        console.error('Image upload error:', error)
-                        toast.error('Error uploading image.')
                       }
-                    }
-                  }}
-                />
-                {formData?.imageUrl && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    }}
+                    style={{
+                      opacity: 0,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <Typography variant='body2' sx={{ color: '#888' }}>
+                    Drag & drop or click to upload an image
+                  </Typography>
+                </Box>
+                {formData.imageUrl && (
+                  <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                     <img
-                      src={formData?.imageUrl}
+                      src={formData.imageUrl}
                       alt='Uploaded'
                       style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
                     />
                     <Button
-                      variant='contained'
+                      variant='outlined'
                       color='secondary'
                       onClick={() =>
                         setFormData(prevState => ({
@@ -1001,263 +972,144 @@ const MainPage = () => {
                     </Button>
                   </Box>
                 )}
-              </Box>
-            </Grid> */}
-            <Grid item xs={12}>
-              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
-                Upload Function Image
-              </Typography>
-              <Box
-                sx={{
-                  border: '2px dashed #ccc',
-                  borderRadius: '8px',
-                  padding: 2,
-                  textAlign: 'center',
-                  position: 'relative',
-                  backgroundColor: '#f9f9f9',
-                  '&:hover': {
-                    borderColor: '#11817B',
-                    backgroundColor: '#f1f1f1'
-                  }
-                }}
-              >
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={async e => {
-                    const file = e.target.files[0] // Get the selected file
-                    if (file) {
-                      try {
-                        const formData = new FormData()
-                        formData.append('file', file)
-                        // Call the API to upload the file
-                        const response = await uploadFile(formData)
-                        if (response.status === 200) {
-                          const imageUrl = response.data.data.fileUrl
-                          setFormData(prevState => ({
-                            ...prevState,
-                            imageUrl
-                          }))
-                          toast.success('Image uploaded successfully!')
-                        } else {
-                          toast.error('Failed to upload image.')
+              </Grid>
+
+              {/* React Quill Editor for Details */}
+
+              <Grid item xs={12}>
+                <Box sx={{ marginTop: 2 }}>
+                  <h4>Add Details (optional)</h4>
+                  <ReactQuill
+                    ref={reactQuillRef}
+                    theme='snow'
+                    placeholder='Start writing...'
+                    modules={{
+                      toolbar: {
+                        container: [
+                          [{ header: '1' }, { header: '2' }, { font: [] }],
+                          [{ size: [] }],
+                          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                          [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+                          ['link', 'image', 'video'],
+                          ['code-block'],
+                          ['clean']
+                        ],
+                        handlers: {
+                          image: imageHandler
                         }
-                      } catch (error) {
-                        console.error('Image upload error:', error)
-                        toast.error('Error uploading image.')
+                      },
+                      clipboard: {
+                        matchVisual: false
                       }
-                    }
-                  }}
-                  style={{
-                    opacity: 0,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    cursor: 'pointer'
-                  }}
-                />
-                <Typography variant='body2' sx={{ color: '#888' }}>
-                  Drag & drop or click to upload an image
-                </Typography>
-              </Box>
-              {formData.imageUrl && (
-                <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <img
-                    src={formData.imageUrl}
-                    alt='Uploaded'
-                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
-                  />
-                  <Button
-                    variant='outlined'
-                    color='secondary'
-                    onClick={() =>
-                      setFormData(prevState => ({
-                        ...prevState,
-                        imageUrl: ''
-                      }))
-                    }
-                  >
-                    Remove Image
-                  </Button>
-                </Box>
-              )}
-            </Grid>
-
-            {/* React Quill Editor for Details */}
-            <Grid item xs={12}>
-              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
-                Import .docx File
-              </Typography>
-              <Box>
-                <input
-                  type='file'
-                  accept='.docx'
-                  onChange={e => {
-                    const file = e.target.files[0]
-                    if (
-                      file &&
-                      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                    ) {
-                      handleDocxUpload(file)
-                    } else {
-                      toast.error('Please upload a valid .docx file.')
-                    }
-                  }}
-                  style={{
-                    display: 'none'
-                  }}
-                  id='upload-docx'
-                />
-                <label htmlFor='upload-docx'>
-                  <Button
-                    variant='contained'
-                    component='span'
-                    sx={{
-                      background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%)',
-                      color: 'white',
-                      '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
                     }}
-                  >
-                    Upload .docx
-                  </Button>
-                </label>
-              </Box>
+                    formats={[
+                      'header',
+                      'font',
+                      'size',
+                      'bold',
+                      'italic',
+                      'underline',
+                      'strike',
+                      'blockquote',
+                      'list',
+                      'bullet',
+                      'indent',
+                      'link',
+                      'image',
+                      'video',
+                      'code-block'
+                    ]}
+                    value={formData.details}
+                    onChange={value => setFormData({ ...formData, details: value })}
+                  />
+                </Box>
+              </Grid>
             </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ marginTop: 2 }}>
-                <h4>Add Details (optional)</h4>
-                <ReactQuill
-                  ref={reactQuillRef}
-                  theme='snow'
-                  placeholder='Start writing...'
-                  modules={{
-                    toolbar: {
-                      container: [
-                        [{ header: '1' }, { header: '2' }, { font: [] }],
-                        [{ size: [] }],
-                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                        [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-                        ['link', 'image', 'video'],
-                        ['code-block'],
-                        ['clean']
-                      ],
-                      handlers: {
-                        image: imageHandler
-                      }
-                    },
-                    clipboard: {
-                      matchVisual: false
-                    }
-                  }}
-                  formats={[
-                    'header',
-                    'font',
-                    'size',
-                    'bold',
-                    'italic',
-                    'underline',
-                    'strike',
-                    'blockquote',
-                    'list',
-                    'bullet',
-                    'indent',
-                    'link',
-                    'image',
-                    'video',
-                    'code-block'
-                  ]}
-                  value={formData.details}
-                  onChange={value => setFormData({ ...formData, details: value })}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal} color='secondary' variant='outlined'>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            color='primary'
-            disabled={!isFormValid.name || !isFormValid.description}
-            sx={{
-              background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
-              color: 'white',
-              '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
-            }}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={viewModalOpen} onClose={handleCloseViewModal} fullWidth maxWidth='md'>
-        <DialogTitle>Industry Details</DialogTitle>
-        <DialogContent>
-          <Card
-            sx={{
-              border: '1px solid #ddd',
-              borderRadius: '12px',
-              boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
-              marginBottom: 2
-            }}
-          >
-            {/* Display the image */}
-            <CardMedia
-              component='img'
-              image={
-                htmlContent?.match(/<img.*?src="(.*?)"/)?.[1] || // Extract the first image URL from HTML
-                'https://via.placeholder.com/400' // Fallback image
-              }
-              alt='Industry Image'
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseModal} color='secondary' variant='outlined'>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              color='primary'
+              disabled={!isFormValid.name || !isFormValid.description}
               sx={{
-                height: 200,
-                objectFit: 'contain', // Ensure the image is fully visible
-                backgroundColor: '#f5f5f5' // Optional: Add a background color for contrast
+                background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                color: 'white',
+                '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
               }}
-            />
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-            {/* Display the details */}
-            <CardContent>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: htmlContent?.replace(/<img.*?>/, '') // Remove the image from the HTML content
-                }}
-                style={{
-                  fontFamily: 'Arial, sans-serif',
-                  lineHeight: '1.6',
-                  color: '#333'
+        <Dialog open={viewModalOpen} onClose={handleCloseViewModal} fullWidth maxWidth='md'>
+          <DialogTitle>Industry Details</DialogTitle>
+          <DialogContent>
+            <Card
+              sx={{
+                border: '1px solid #ddd',
+                borderRadius: '12px',
+                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                overflow: 'hidden',
+                marginBottom: 2
+              }}
+            >
+              {/* Display the image */}
+              <CardMedia
+                component='img'
+                image={
+                  htmlContent?.match(/<img.*?src="(.*?)"/)?.[1] || // Extract the first image URL from HTML
+                  'https://via.placeholder.com/400' // Fallback image
+                }
+                alt='Industry Image'
+                sx={{
+                  height: 200,
+                  objectFit: 'contain', // Ensure the image is fully visible
+                  backgroundColor: '#f5f5f5' // Optional: Add a background color for contrast
                 }}
               />
-            </CardContent>
-          </Card>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseViewModal} color='secondary' variant='contained'>
-            Close
-          </Button>
-          <Button
-            // color='primary'
-            sx={{
-              background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
-              color: 'white',
-              '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
-            }}
-            variant='contained'
-            onClick={() => {
-              setOpenModal(true), setViewModalOpen(false)
-            }}
-            disabled={!permissions.edit}
-          >
-            Edit
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+
+              {/* Display the details */}
+              <CardContent>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: htmlContent?.replace(/<img.*?>/, '') // Remove the image from the HTML content
+                  }}
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    lineHeight: '1.6',
+                    color: '#333'
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseViewModal} color='secondary' variant='contained'>
+              Close
+            </Button>
+            <Button
+              // color='primary'
+              sx={{
+                background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                color: 'white',
+                '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+              }}
+              variant='contained'
+              onClick={() => {
+                setOpenModal(true), setViewModalOpen(false)
+              }}
+              disabled={!permissions.edit}
+            >
+              Edit
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </>
   )
 }
 

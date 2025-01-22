@@ -599,50 +599,7 @@ const MainPage = () => {
             variant='indeterminate'
           />
         )}
-        {/* <Box sx={{ display: 'flex', justifyContent: '' }}>
-          <CardHeader
-            avatar={<Apartment fontSize='large' color='info' />}
-            title='Industry Management'
-            titleTypographyProps={{
-              variant: 'h5',
-              fontWeight: 'bold'
-            }}
-            subheader='Add, edit, or delete industries'
-            action={
-              <Button
-                variant='contained'
-                color='primary'
-                onClick={() => handleOpenModal()}
-                sx={{
-                  background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
-                  color: 'white',
-                  '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
-                }}
-                // disabled={!permissions?.create}
-                disabled={!permissions?.create}
-              >
-                Add Industry
-              </Button>
-            }
-          />
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleExportCSV}
-            sx={{
-              background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)', // Slightly lighter gradient
-              color: 'white',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #2E7D32, #155B47)' // Slight hover effect
-              },
-              marginLeft: 2,
-              minWidth: '150px', // Reduced width
-              minHight: '150px'
-            }}
-          >
-            Export CSV
-          </Button>
-        </Box> */}
+
         <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
           <CardHeader
             avatar={<Apartment fontSize='large' color='info' />}
@@ -963,7 +920,7 @@ const MainPage = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <TextField
                     label=''
@@ -1011,8 +968,65 @@ const MainPage = () => {
                     />
                   </Popover>
                 </Box>
-              </Grid>
+              </Grid> */}
+
               <Grid item xs={12}>
+                <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                  Pick a Theme Color
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {/* Color Preview */}
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      backgroundColor: formData.color || '#ddd',
+                      border: '2px solid #ccc',
+                      boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={handleOpenColorPicker} // Click to open the picker
+                  />
+                  {/* Hidden Color Input */}
+                  <TextField
+                    label='Hex Color Code'
+                    name='color'
+                    value={formData.BackgroundColor}
+                    onChange={handleInputChange}
+                    fullWidth={false}
+                    margin='normal'
+                    sx={{ maxWidth: 200 }}
+                    InputProps={{
+                      style: {
+                        backgroundColor: formData.BackgroundColor, // Set background color
+                        BackgroundColor: formData.BackgroundColor === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                      }
+                    }}
+                  />
+                  <Popover
+                    open={isColorPickerOpen}
+                    anchorEl={colorPickerAnchor}
+                    onClose={handleCloseColorPicker}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'left'
+                    }}
+                  >
+                    <SketchPicker
+                      color={formData.BackgroundColor || '#ffffff'}
+                      onChangeComplete={color => {
+                        setFormData(prevState => ({
+                          ...prevState,
+                          BackgroundColor: color.hex // Update the color in state
+                        }))
+                      }}
+                      disableAlpha // Remove alpha slider for simplicity
+                    />
+                  </Popover>
+                </Box>
+              </Grid>
+              {/* <Grid item xs={12}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <input
                     type='file'
@@ -1069,6 +1083,87 @@ const MainPage = () => {
                     </Box>
                   )}
                 </Box>
+              </Grid> */}
+              <Grid item xs={12}>
+                <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                  Upload Function Image
+                </Typography>
+                <Box
+                  sx={{
+                    border: '2px dashed #ccc',
+                    borderRadius: '8px',
+                    padding: 2,
+                    textAlign: 'center',
+                    position: 'relative',
+                    backgroundColor: '#f9f9f9',
+                    '&:hover': {
+                      borderColor: '#11817B',
+                      backgroundColor: '#f1f1f1'
+                    }
+                  }}
+                >
+                  <input
+                    type='file'
+                    accept='image/*'
+                    onChange={async e => {
+                      const file = e.target.files[0] // Get the selected file
+                      if (file) {
+                        try {
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          // Call the API to upload the file
+                          const response = await uploadFile(formData)
+                          if (response.status === 200) {
+                            const BackgroundImage = response.data.data.fileUrl
+                            setFormData(prevState => ({
+                              ...prevState,
+                              BackgroundImage
+                            }))
+                            toast.success('Image uploaded successfully!')
+                          } else {
+                            toast.error('Failed to upload image.')
+                          }
+                        } catch (error) {
+                          console.error('Image upload error:', error)
+                          toast.error('Error uploading image.')
+                        }
+                      }
+                    }}
+                    style={{
+                      opacity: 0,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <Typography variant='body2' sx={{ color: '#888' }}>
+                    Drag & drop or click to upload an image
+                  </Typography>
+                </Box>
+                {formData.BackgroundImage && (
+                  <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={formData.BackgroundImage}
+                      alt='Uploaded'
+                      style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <Button
+                      variant='outlined'
+                      color='secondary'
+                      onClick={() =>
+                        setFormData(prevState => ({
+                          ...prevState,
+                          BackgroundImage: ''
+                        }))
+                      }
+                    >
+                      Remove Image
+                    </Button>
+                  </Box>
+                )}
               </Grid>
 
               {/* React Quill Editor for Details */}

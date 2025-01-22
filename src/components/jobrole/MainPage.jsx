@@ -611,6 +611,18 @@ const MainPage = () => {
           </Button>
         }
       />
+
+      <Button
+        variant='text'
+        component='label'
+        sx={{
+          fontSize: 'small',
+          marginLeft: 210
+        }}
+      >
+        Import CSV
+        <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
+      </Button>
       <Box sx={{ paddingBottom: 6 }}>
         <DebouncedInput
           value={globalFilter ?? ''}
@@ -618,22 +630,6 @@ const MainPage = () => {
           placeholder='Search Jobs'
         />
       </Box>
-      <Button
-        variant='contained'
-        component='label'
-        sx={{
-          fontSize: 'small',
-          background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)',
-          color: 'white',
-          '&:hover': { background: 'linear-gradient(90deg, #2E7D32, #155B47)' },
-          minWidth: '150px',
-          height: '30px'
-        }}
-      >
-        Import CSV
-        <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
-      </Button>
-
       {/* Industry List Table */}
       <TableContainer component={Paper} sx={{ marginTop: 4 }}>
         <Table>
@@ -801,7 +797,7 @@ const MainPage = () => {
 
       {/* Modal for Add/Edit Job Role */}
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
-        <DialogTitle>{'Add Job Role'}</DialogTitle>
+        <DialogTitle>{editingIndex !== null ? 'Edit News' : 'Add News'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -831,7 +827,7 @@ const MainPage = () => {
               />
             </Grid>
             {/* color picker */}
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <TextField
                   label='Selected Color'
@@ -879,9 +875,65 @@ const MainPage = () => {
                   />
                 </Popover>
               </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                Pick a Theme Color
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Color Preview */}
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    backgroundColor: formData.color || '#ddd',
+                    border: '2px solid #ccc',
+                    boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={handleOpenColorPicker} // Click to open the picker
+                />
+                {/* Hidden Color Input */}
+                <TextField
+                  label='Hex Color Code'
+                  name='color'
+                  value={formData.color}
+                  onChange={handleInputChange}
+                  fullWidth={false}
+                  margin='normal'
+                  sx={{ maxWidth: 200 }}
+                  InputProps={{
+                    style: {
+                      backgroundColor: formData.color, // Set background color
+                      color: formData.color === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    }
+                  }}
+                />
+                <Popover
+                  open={isColorPickerOpen}
+                  anchorEl={colorPickerAnchor}
+                  onClose={handleCloseColorPicker}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                >
+                  <SketchPicker
+                    color={formData.color || '#ffffff'}
+                    onChangeComplete={color => {
+                      setFormData(prevState => ({
+                        ...prevState,
+                        color: color.hex // Update the color in state
+                      }))
+                    }}
+                    disableAlpha // Remove alpha slider for simplicity
+                  />
+                </Popover>
+              </Box>
             </Grid>
             {/* Industry Image Input */}
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <input
                   type='file'
@@ -938,6 +990,87 @@ const MainPage = () => {
                   </Box>
                 )}
               </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                Upload Function Image
+              </Typography>
+              <Box
+                sx={{
+                  border: '2px dashed #ccc',
+                  borderRadius: '8px',
+                  padding: 2,
+                  textAlign: 'center',
+                  position: 'relative',
+                  backgroundColor: '#f9f9f9',
+                  '&:hover': {
+                    borderColor: '#11817B',
+                    backgroundColor: '#f1f1f1'
+                  }
+                }}
+              >
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={async e => {
+                    const file = e.target.files[0] // Get the selected file
+                    if (file) {
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        // Call the API to upload the file
+                        const response = await uploadFile(formData)
+                        if (response.status === 200) {
+                          const imageUrl = response.data.data.fileUrl
+                          setFormData(prevState => ({
+                            ...prevState,
+                            imageUrl
+                          }))
+                          toast.success('Image uploaded successfully!')
+                        } else {
+                          toast.error('Failed to upload image.')
+                        }
+                      } catch (error) {
+                        console.error('Image upload error:', error)
+                        toast.error('Error uploading image.')
+                      }
+                    }
+                  }}
+                  style={{
+                    opacity: 0,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <Typography variant='body2' sx={{ color: '#888' }}>
+                  Drag & drop or click to upload an image
+                </Typography>
+              </Box>
+              {formData.imageUrl && (
+                <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <img
+                    src={formData.imageUrl}
+                    alt='Uploaded'
+                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <Button
+                    variant='outlined'
+                    color='secondary'
+                    onClick={() =>
+                      setFormData(prevState => ({
+                        ...prevState,
+                        imageUrl: ''
+                      }))
+                    }
+                  >
+                    Remove Image
+                  </Button>
+                </Box>
+              )}
             </Grid>
 
             <Grid item xs={12}>
