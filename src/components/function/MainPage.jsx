@@ -9,6 +9,8 @@ import { SketchPicker } from 'react-color'
 
 import { AddCircleOutline, ColorLens as ColorLensIcon } from '@mui/icons-material'
 
+import mammoth from 'mammoth'
+
 import {
   Box,
   Button,
@@ -476,6 +478,43 @@ const MainPage = () => {
       }
     } else {
       toast.error('Please select a valid CSV file.')
+    }
+  }
+  // Inside the MainPage component:
+  const handleDocxUpload = async file => {
+    if (file) {
+      const reader = new FileReader()
+
+      reader.onload = async event => {
+        const arrayBuffer = event.target.result
+
+        try {
+          const options = {
+            convertImage: mammoth.images.inline(element => {
+              return element.read('base64').then(imageBuffer => {
+                return {
+                  src: `data:${element.contentType};base64,${imageBuffer}` // Base64 image
+                }
+              })
+            })
+          }
+
+          // Convert .docx to HTML with images
+          const { value: htmlContent } = await mammoth.convertToHtml({ arrayBuffer }, options)
+
+          // Insert HTML into Quill
+          const quill = reactQuillRef.current.getEditor()
+          const range = quill.getSelection()
+          quill.clipboard.dangerouslyPasteHTML(range?.index || 0, htmlContent)
+
+          toast.success('Document content added successfully with images!')
+        } catch (error) {
+          console.error('Error parsing .docx file:', error)
+          toast.error('Failed to parse the document.')
+        }
+      }
+
+      reader.readAsArrayBuffer(file)
     }
   }
 
@@ -1046,6 +1085,45 @@ const MainPage = () => {
             </Grid>
 
             {/* React Quill Editor for Details */}
+            <Grid item xs={12}>
+              <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>
+                Import .docx File
+              </Typography>
+              <Box>
+                <input
+                  type='file'
+                  accept='.docx'
+                  onChange={e => {
+                    const file = e.target.files[0]
+                    if (
+                      file &&
+                      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    ) {
+                      handleDocxUpload(file)
+                    } else {
+                      toast.error('Please upload a valid .docx file.')
+                    }
+                  }}
+                  style={{
+                    display: 'none'
+                  }}
+                  id='upload-docx'
+                />
+                <label htmlFor='upload-docx'>
+                  <Button
+                    variant='contained'
+                    component='span'
+                    sx={{
+                      background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%)',
+                      color: 'white',
+                      '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' }
+                    }}
+                  >
+                    Upload .docx
+                  </Button>
+                </label>
+              </Box>
+            </Grid>
             <Grid item xs={12}>
               <Box sx={{ marginTop: 2 }}>
                 <h4>Add Details (optional)</h4>

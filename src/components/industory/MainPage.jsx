@@ -740,12 +740,12 @@ const MainPage = () => {
                   }
                 }}
               >
-                <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Description</TableCell>
-                <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Details</TableCell>
-                <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Color</TableCell>
-                <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Image</TableCell>
-                <TableCell sx={{ width: '5%', fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
