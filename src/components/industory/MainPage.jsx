@@ -829,7 +829,7 @@ const MainPage = () => {
                           </IconButton>
                         </Tooltip>
                         <IconButton
-                          disabled={!permissions.edit}
+                          disabled={!permissions.edit || industry?.tags?.length > 0}
                           color='secondary'
                           onClick={() => handleDelete(industry)}
                         >

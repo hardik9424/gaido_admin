@@ -152,16 +152,16 @@ const UserListCards = ({ data }) => {
       change: 'positive',
       changeNumber: '18%',
       subTitle: 'Highest User in Course'
-    },
-    {
-      title: 'Total Streams',
-      value: <CountUp start={0} end={dataMap?.totalStreams || 0} />,
-      avatarIcon: 'tabler-user-check',
-      avatarColor: 'success',
-      change: 'negative',
-      changeNumber: '14%',
-      subTitle: 'Highest User in Stream'
     }
+    // {
+    //   title: 'Total Streams',
+    //   value: <CountUp start={0} end={dataMap?.totalStreams || 0} />,
+    //   avatarIcon: 'tabler-user-check',
+    //   avatarColor: 'success',
+    //   change: 'negative',
+    //   changeNumber: '14%',
+    //   subTitle: 'Highest User in Stream'
+    // }
   ]
 
   // React Slick settings
@@ -190,13 +190,13 @@ const UserListCards = ({ data }) => {
   }
 
   return (
-    <Slider {...settings}>
+    <Grid container spacing={3} sx={{ width: '100%' }}>
       {dataAnalytic?.map((item, i) => (
-        <Grid key={i} item>
+        <Grid key={i} item xs={12} sm={6} md={3}>
           <HorizontalWithSubtitle {...item} />
         </Grid>
       ))}
-    </Slider>
+    </Grid>
   )
 }
 
