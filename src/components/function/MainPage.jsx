@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 
 import { SketchPicker } from 'react-color'
 
-import { AddCircleOutline, ColorLens as ColorLensIcon } from '@mui/icons-material'
+import { AddCircleOutline, ColorLens as ColorLensIcon, UploadFile } from '@mui/icons-material'
 
 import mammoth from 'mammoth'
 
@@ -572,7 +572,7 @@ const MainPage = () => {
         />
       </Box>
       <Button
-        variant='contained'
+        variant='text'
         component='label'
         sx={{
           fontSize: 'small',
@@ -582,6 +582,7 @@ const MainPage = () => {
           minWidth: '150px',
           height: '30px'
         }}
+        startIcon={<UploadFile />}
       >
         Import CSV
         <input type='file' accept='.csv' hidden onChange={handleImportCSV} />

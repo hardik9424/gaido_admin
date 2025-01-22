@@ -679,22 +679,6 @@ const MainPage = () => {
               marginTop: -8
             }}
           >
-            {/* <Button
-              variant='contained'
-              // color='primary'
-              onClick={handleExportCSV}
-              sx={{
-                fontSize: 'small',
-                background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.5) 0%, #0B6E64 100%)',
-                color: 'white',
-                '&:hover': { background: 'linear-gradient(90deg, #2E7D32, #155B47)' },
-                minWidth: '150px',
-                height: '30px',
-                marginBottom: 1 // Add spacing between buttons
-              }}
-            >
-              Export CSV
-            </Button> */}
             <Button
               variant='text'
               component='label'
