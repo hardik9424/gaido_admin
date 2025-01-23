@@ -312,7 +312,7 @@ import CloseIcon from '@mui/icons-material/Close'
 // API Imports
 import { getAllPermissions, createRole } from '@/app/api'
 
-const RoleDialog = ({ open, setOpen, title }) => {
+const RoleDialog = ({ open = true, setOpen = true, title }) => {
   // States
   const [permissionsList, setPermissionsList] = useState([]) // Available permissions
   const [selectedPermissions, setSelectedPermissions] = useState([]) // Selected permissions
@@ -395,6 +395,22 @@ const RoleDialog = ({ open, setOpen, title }) => {
   const handleSubmit = async () => {
     try {
       const formattedPermissions = formatPermissions()
+      console.log(formattedPermissions)
+      const hasPermissionSelected = formattedPermissions.some(
+        permission => permission.create || permission.edit || permission.read
+      )
+
+      if (!hasPermissionSelected) {
+        toast.error('Please select at least one permission option')
+        return
+      }
+
+      if (!hasPermissionSelected) {
+        // Throw an error if no permission is selected
+        toast.error('Please select at least one permission option')
+        return
+      }
+
       const data = {
         name: roleName,
         permissions: formattedPermissions,
@@ -472,8 +488,10 @@ const RoleDialog = ({ open, setOpen, title }) => {
           </Box>
           <Box sx={{ mt: 4 }}>
             <Typography variant='h6'>Permission Actions</Typography>
+
             {selectedPermissions.map(permissionId => {
               const permission = permissionsList.find(perm => perm._id === permissionId)
+
               return (
                 <Box key={permissionId} sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
                   <Typography sx={{ flex: 1 }}>{permission?.name}</Typography>
@@ -497,7 +515,11 @@ const RoleDialog = ({ open, setOpen, title }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='contained' onClick={handleSubmit}>
+          <Button
+            disabled={selectedPermissions.length && roleName.length > 0 ? false : true}
+            variant='contained'
+            onClick={handleSubmit}
+          >
             Submit
           </Button>
           <Button variant='outlined' onClick={handleClose}>

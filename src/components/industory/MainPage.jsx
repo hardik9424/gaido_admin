@@ -481,6 +481,7 @@ const MainPage = () => {
   const handleCloseModal = () => {
     setOpenModal(false)
     setEditingIndex('')
+    setTouchedFields({}) //
   }
 
   // Handle Delete Industry
@@ -764,27 +765,31 @@ const MainPage = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
                         <Box>
-                          <Box
-                            component='img'
-                            src={industry.imageUrl || 'n/a'}
-                            alt='Preview'
-                            sx={{
-                              width: 50,
-                              height: 50,
-                              objectFit: 'cover',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              border: '1px solid #ddd',
-                              transition: 'transform 0.2s',
-                              '&:hover': {
-                                transform: 'scale(1.1)'
-                              }
-                            }}
-                            onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
-                            onMouseLeave={handleImageLeave}
-                          />
+                          {industry.imageUrl ? (
+                            <Box
+                              component='img'
+                              src={industry.imageUrl || 'n/a'}
+                              alt='Preview'
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                objectFit: 'cover',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                border: '1px solid #ddd',
+                                transition: 'transform 0.2s',
+                                '&:hover': {
+                                  transform: 'scale(1.1)'
+                                }
+                              }}
+                              onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                              onMouseLeave={handleImageLeave}
+                            />
+                          ) : (
+                            'n/a'
+                          )}
                         </Box>
 
                         {/* Popover for Larger Image */}
@@ -981,16 +986,19 @@ const MainPage = () => {
                       width: 32,
                       height: 32,
                       borderRadius: '50%',
-                      backgroundColor: formData.color || '#ddd',
+                      background:
+                        formData?.BackgroundColor ||
+                        'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)',
                       border: '2px solid #ccc',
                       boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
                       cursor: 'pointer'
                     }}
                     onClick={handleOpenColorPicker} // Click to open the picker
                   />
+                  <span>or</span>
                   {/* Hidden Color Input */}
                   <TextField
-                    label='Hex Color Code'
+                    label={formData?.BackgroundColor ? '' : 'Hex Color Code'}
                     name='color'
                     value={formData.BackgroundColor}
                     onChange={handleInputChange}
@@ -1228,7 +1236,7 @@ const MainPage = () => {
             <Button
               onClick={handleSave}
               color='primary'
-              disabled={!isFormValid.name || !isFormValid.description}
+              disabled={!formData?.name || !formData?.description}
               sx={{
                 background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
                 color: 'white',

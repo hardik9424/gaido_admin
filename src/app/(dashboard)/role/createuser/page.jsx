@@ -28,7 +28,8 @@ import {
   DialogActions,
   Chip,
   LinearProgress,
-  CardHeader
+  CardHeader,
+  InputAdornment
 } from '@mui/material'
 
 import { useFormik } from 'formik'
@@ -163,7 +164,7 @@ const AdminUserTable = () => {
       firstName,
       lastName,
       email: user.email,
-      mobile: user.mobileNumber
+      mobile: user.mobile
       // password: user.password
     })
     setEditUserDetailsDialogOpen(true)
@@ -534,6 +535,12 @@ const AdminUserTable = () => {
               onChange={e => setEditFormValues({ ...editFormValues, role: e.target.value })}
               label='Role'
               disabled={rolesLoading}
+              renderValue={selected => {
+                console.log(selected, dropdownRoles)
+                // Find the role object from the dropdownRoles array based on the ID
+                const selectedRole = dropdownRoles.find(role => role._id.toString() === selected.toString())
+                return selectedRole ? selectedRole.name : editedRole
+              }}
             >
               {dropdownRoles.map(role => (
                 <MenuItem key={role._id} value={role._id}>
@@ -589,15 +596,16 @@ const AdminUserTable = () => {
                 onChange={e => setUserDetailsToEdit({ ...userDetailsToEdit, password: e.target.value })}
                 placeholder='**********'
                 type={passwordVisible ? 'text' : 'password'}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position='end'>
+                      <IconButton onClick={togglePasswordVisibility} aria-label='toggle password visibility'>
+                        {passwordVisible ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
               />
-              <IconButton
-                edge='end'
-                onClick={togglePasswordVisibility}
-                disabled={userDetailsToEdit.password === ''}
-                aria-label='toggle password visibility'
-              >
-                {passwordVisible ? <Visibility /> : <VisibilityOff />}
-              </IconButton>
             </Grid>
             <Grid item xs={12}>
               <TextField

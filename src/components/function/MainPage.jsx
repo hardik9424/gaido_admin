@@ -323,6 +323,8 @@ const MainPage = () => {
 
   const handleCloseModal = () => {
     setOpenModal(false)
+    setTouchedFields({})
+    setEditingIndex('')
   }
 
   // Handle Delete Industry
@@ -538,7 +540,7 @@ const MainPage = () => {
             variant='indeterminate'
           />
         )}
-        <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+        {/* <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
           <CardHeader
             avatar={<Apartment fontSize='large' color='info' />}
             title='Function Management'
@@ -563,19 +565,91 @@ const MainPage = () => {
               </Button>
             }
           />
-
           <Button
             variant='text'
             component='label'
             sx={{
               fontSize: 'small',
-              marginLeft: 210
+              paddingLeft: 170
             }}
             startIcon={<UploadFile />}
           >
             Import CSV
             <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
           </Button>
+          <Box sx={{ paddingBottom: 6 }}>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              // onChange={value => setGlobalFilter(String(value))}
+              // onChange={value => {
+              //   setGlobalFilter(value) // Update search term
+              //   setPage(1) // Reset to the first page for search results
+              // }}
+              onChange={handleSearch}
+              placeholder='Search Function'
+            />
+          </Box>
+        </Box> */}
+        <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+          <CardHeader
+            avatar={<Apartment fontSize='large' color='info' />}
+            title='Functions Management'
+            titleTypographyProps={{
+              variant: 'h5',
+              fontWeight: 'bold'
+            }}
+            subheader='Add, edit, or delete functions'
+            action={
+              <Button
+                variant='contained'
+                color='primary'
+                onClick={() => handleOpenModal()}
+                sx={{
+                  background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                  color: 'white',
+                  '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' },
+                  minWidth: '200px' // Consistent width
+                }}
+                disabled={!permissions?.create}
+              >
+                Add Function
+              </Button>
+            }
+          />
+          <Box
+            sx={{
+              display: 'flex',
+
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              marginRight: 6,
+              marginTop: -8
+            }}
+          >
+            <Button
+              variant='text'
+              component='label'
+              sx={{
+                fontSize: 'small'
+              }}
+              startIcon={<UploadFile />}
+            >
+              Import CSV
+              <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
+            </Button>
+          </Box>
+        </Box>
+        <Box sx={{ paddingBottom: 6 }}>
+          <DebouncedInput
+            value={globalFilter ?? ''}
+            // onChange={value => setGlobalFilter(String(value))}
+            // onChange={value => {
+            //   setGlobalFilter(value) // Update search term
+            //   setPage(1) // Reset to the first page for search results
+            // }}
+            onChange={handleSearch}
+            placeholder='Search Functions'
+          />
         </Box>
 
         {/* Industry List Table */}
@@ -670,25 +744,29 @@ const MainPage = () => {
                     </TableCell>
                     <TableCell sx={{ textAlign: 'start', verticalAlign: 'middle' }}>
                       <Box>
-                        <Box
-                          component='img'
-                          src={industry.imageUrl || 'n/a'}
-                          alt='Preview'
-                          sx={{
-                            width: 50,
-                            height: 50,
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            border: '1px solid #ddd',
-                            transition: 'transform 0.2s',
-                            '&:hover': {
-                              transform: 'scale(1.1)'
-                            }
-                          }}
-                          onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
-                          onMouseLeave={handleImageLeave}
-                        />
+                        {industry.imageUrl ? (
+                          <Box
+                            component='img'
+                            src={industry.imageUrl || 'n/a'}
+                            alt='Preview'
+                            sx={{
+                              width: 50,
+                              height: 50,
+                              objectFit: 'cover',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              border: '1px solid #ddd',
+                              transition: 'transform 0.2s',
+                              '&:hover': {
+                                transform: 'scale(1.1)'
+                              }
+                            }}
+                            onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                            onMouseLeave={handleImageLeave}
+                          />
+                        ) : (
+                          'n/a'
+                        )}
                       </Box>
 
                       {/* Popover for Larger Image */}
@@ -844,16 +922,19 @@ const MainPage = () => {
                       width: 32,
                       height: 32,
                       borderRadius: '50%',
-                      backgroundColor: formData.color || '#ddd',
+                      background:
+                        formData?.BackgroundColor ||
+                        'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)',
                       border: '2px solid #ccc',
                       boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
                       cursor: 'pointer'
                     }}
                     onClick={handleOpenColorPicker} // Click to open the picker
                   />
+                  <span>or</span>
                   {/* Hidden Color Input */}
                   <TextField
-                    label='Hex Color Code'
+                    label={formData?.color ? '' : 'Hex Color Code'}
                     name='color'
                     value={formData.color}
                     onChange={handleInputChange}
@@ -1033,7 +1114,7 @@ const MainPage = () => {
             <Button
               onClick={handleSave}
               color='primary'
-              disabled={!isFormValid.name || !isFormValid.description}
+              disabled={!formData?.name || !formData?.description}
               sx={{
                 background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
                 color: 'white',

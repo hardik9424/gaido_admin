@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 
 import { SketchPicker } from 'react-color'
 
-import { ColorLens as ColorLensIcon } from '@mui/icons-material'
+import { ColorLens as ColorLensIcon, UploadFile } from '@mui/icons-material'
 
 import {
   Box,
@@ -117,7 +117,7 @@ const MainPage = () => {
   const [permissions, setPermissions] = useState({ create: false, read: false, edit: false, delete: false })
   const [adminId, setAdminId] = useState('')
   // const [alreadySe]
-  const DebouncedInput = ({ value: initialValue, onChange, debounce = 700, ...props }) => {
+  const DebouncedInput = ({ value: initialValue, onChange, debounce = 2000, ...props }) => {
     const [value, setValue] = useState(initialValue)
 
     useEffect(() => {
@@ -237,12 +237,6 @@ const MainPage = () => {
     }
   }
 
-  useEffect(() => {
-    fetchIndustries()
-    fetchFunctions()
-    fetchAllFunctionLists() // Ensure job roles are also fetched
-  }, [])
-
   const fetchAllFunctionLists = async () => {
     setLoading(true)
     try {
@@ -260,6 +254,11 @@ const MainPage = () => {
       setLoading(false)
     }
   }
+  useEffect(() => {
+    fetchIndustries()
+    fetchFunctions()
+    fetchAllFunctionLists() // Ensure job roles are also fetched
+  }, [])
 
   const validateField = (field, value) => {
     let isValid = true
@@ -411,6 +410,7 @@ const MainPage = () => {
 
   const handleCloseModal = () => {
     setOpenModal(false)
+    setTouchedFields({})
   }
 
   // Handle Delete Industry
@@ -540,13 +540,31 @@ const MainPage = () => {
     }
   }
 
+  // const handleCheckboxChange = (type, id) => {
+  //   console.log(type, id)
+  //   setFormData(prev => {
+  //     const ids = type === 'industry' ? prev.industryIds : prev.functionIds
+  //     const updatedIds = ids?.includes(id) ? ids?.filter(i => i !== id) : [...ids, id]
+  //     return { ...prev, [type === 'industry' ? 'industryIds' : 'functionIds']: updatedIds }
+  //   })
+  // }
   const handleCheckboxChange = (type, id) => {
     setFormData(prev => {
-      const ids = type === 'industry' ? prev.industryIds : prev.functionIds
+      const ids = Array.isArray(type === 'industry' ? prev.industryIds : prev.functionIds)
+        ? type === 'industry'
+          ? prev.industryIds
+          : prev.functionIds
+        : []
+
       const updatedIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]
-      return { ...prev, [type === 'industry' ? 'industryIds' : 'functionIds']: updatedIds }
+
+      return {
+        ...prev,
+        [type === 'industry' ? 'industryIds' : 'functionIds']: updatedIds
+      }
     })
   }
+
   const handleImportCSV = async event => {
     const file = event?.target?.files[0] // Get the selected file
     console.log('file', file)
@@ -587,7 +605,7 @@ const MainPage = () => {
         />
       )}
 
-      <CardHeader
+      {/* <CardHeader
         avatar={<Apartment fontSize='large' color='info' />}
         title='Job-Role Management'
         titleTypographyProps={{
@@ -623,6 +641,63 @@ const MainPage = () => {
         Import CSV
         <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
       </Button>
+      <Box sx={{ paddingBottom: 6 }}>
+        <DebouncedInput
+          value={globalFilter ?? ''}
+          onChange={value => setGlobalFilter(String(value))}
+          placeholder='Search Jobs'
+        />
+      </Box> */}
+      <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
+        <CardHeader
+          avatar={<Apartment fontSize='large' color='info' />}
+          title='Jobs Management'
+          titleTypographyProps={{
+            variant: 'h5',
+            fontWeight: 'bold'
+          }}
+          subheader='Add, edit, or delete jobs'
+          action={
+            <Button
+              variant='contained'
+              color='primary'
+              onClick={() => handleOpenModal()}
+              sx={{
+                background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
+                color: 'white',
+                '&:hover': { background: 'linear-gradient(90deg, #388E3C, #1C3E2B)' },
+                minWidth: '200px' // Consistent width
+              }}
+              disabled={!permissions?.create}
+            >
+              Add Job
+            </Button>
+          }
+        />
+        <Box
+          sx={{
+            display: 'flex',
+
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            marginRight: 6,
+            marginTop: -8
+          }}
+        >
+          <Button
+            variant='text'
+            component='label'
+            sx={{
+              fontSize: 'small'
+            }}
+            startIcon={<UploadFile />}
+          >
+            Import CSV
+            <input type='file' accept='.csv' hidden onChange={handleImportCSV} />
+          </Button>
+        </Box>
+      </Box>
+
       <Box sx={{ paddingBottom: 6 }}>
         <DebouncedInput
           value={globalFilter ?? ''}
@@ -729,25 +804,29 @@ const MainPage = () => {
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>
                     <Box>
-                      <Box
-                        component='img'
-                        src={industry.imageUrl || 'n/a'}
-                        alt='Preview'
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          objectFit: 'cover',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          border: '1px solid #ddd',
-                          transition: 'transform 0.2s',
-                          '&:hover': {
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                        onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
-                        onMouseLeave={handleImageLeave}
-                      />
+                      {industry.imageUrl ? (
+                        <Box
+                          component='img'
+                          src={industry.imageUrl || 'n/a'}
+                          alt='Preview'
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            border: '1px solid #ddd',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)'
+                            }
+                          }}
+                          onMouseEnter={event => handleImageHover(event, industry.imageUrl)}
+                          onMouseLeave={handleImageLeave}
+                        />
+                      ) : (
+                        'n/a'
+                      )}
                     </Box>
 
                     {/* Popover for Larger Image */}
@@ -797,7 +876,7 @@ const MainPage = () => {
 
       {/* Modal for Add/Edit Job Role */}
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth='md'>
-        <DialogTitle>{editingIndex !== null ? 'Edit News' : 'Add News'}</DialogTitle>
+        <DialogTitle>{editingIndex !== null ? 'Edit Jobs' : 'Add Jobs'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -887,16 +966,18 @@ const MainPage = () => {
                     width: 32,
                     height: 32,
                     borderRadius: '50%',
-                    backgroundColor: formData.color || '#ddd',
+                    background:
+                      formData?.color || 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)',
                     border: '2px solid #ccc',
                     boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',
                     cursor: 'pointer'
                   }}
                   onClick={handleOpenColorPicker} // Click to open the picker
                 />
+                <span>or</span>
                 {/* Hidden Color Input */}
                 <TextField
-                  label='Hex Color Code'
+                  label={formData?.color ? '' : 'Hex Color Code'}
                   name='color'
                   value={formData.color}
                   onChange={handleInputChange}
@@ -1080,7 +1161,9 @@ const MainPage = () => {
                 onClick={e => setOpenIndustriesMenu(e.currentTarget)}
                 sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
               >
-                {`Select Industries (${formData?.industryIds?.length})`}
+                {/* {`Select Industries (${formData?.industryIds?.length})`}
+                 */}
+                {`Select Industries `}
               </Button>
               <Menu
                 anchorEl={openIndustriesMenu}
@@ -1145,7 +1228,8 @@ const MainPage = () => {
                 onClick={e => setOpenFunctionsMenu(e.currentTarget)}
                 sx={{ textTransform: 'none', width: '100%', justifyContent: 'flex-start', marginBottom: 1 }}
               >
-                {`Select Functions (${formData?.functionIds?.length})`}
+                {/* {`Select Functions (${formData?.functionIds?.length})`} */}
+                {`Select Functions`}
               </Button>
               <Menu
                 anchorEl={openFunctionsMenu}
@@ -1261,7 +1345,7 @@ const MainPage = () => {
           <Button
             onClick={handleSave}
             color='primary'
-            disabled={!isFormValid.name || !isFormValid.description}
+            disabled={!formData?.name || !formData?.description}
             sx={{
               background: 'linear-gradient(270deg, rgba(17, 129, 123, 0.7) 0%, #11817B 100%) !important',
               color: 'white',

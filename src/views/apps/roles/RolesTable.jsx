@@ -567,7 +567,7 @@ const RolesTable = () => {
     setRoleName(role.original.name) // Set the role name
   }
 
-  const handleDeleteRole = role => {
+  const handleDeleteRole = async role => {
     console.log('item', role)
     setPermissionIds(prev => [...prev, role?.permission])
     const updatedPermissions = alreadyAssignedRoles.filter(
@@ -576,6 +576,8 @@ const RolesTable = () => {
 
     // Update the state to reflect the UI changes
     setAlreadyAssignedRoles(updatedPermissions)
+    const getIds = alreadyAssignedRoles.map(val => val.permission)
+    const response = await deleteRole({ roleId: selectedRoleId, permissionIds: getIds })
   }
   const handleDelete = role => {
     console.log('ind', role)
@@ -907,7 +909,12 @@ const RolesTable = () => {
           </DialogContent>
 
           <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-            <Button variant='contained' type='submit' onClick={handleSubmit}>
+            <Button
+              // disabled={alreadyAssignedRoles.length === 0 ? true : false}
+              variant='contained'
+              type='submit'
+              onClick={handleSubmit}
+            >
               Submit
             </Button>
             <Button

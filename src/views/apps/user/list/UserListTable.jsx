@@ -142,14 +142,14 @@ const UserListTable = () => {
     try {
       if (isBlocking) {
         // Call Block API
-        const response = await unBlockUser(payload)
+        const response = await blockUser(payload)
         if (response.status == 200) {
           toast.success('User blocked successfully.')
           fetchAllUsers()
         }
       } else {
         // Call Unblock API
-        const response = await blockUser(payload)
+        const response = await unBlockUser(payload)
         if (response.status == 200) {
           toast.success('User unblocked successfully.')
           fetchAllUsers()
@@ -332,7 +332,7 @@ const UserListTable = () => {
             // color={row.original.blocked.length > 0 ? 'success' : 'error'}
             onClick={() => handleBlockDialogOpen(row.original)} // disabled={userRole !== 'superadmin' && userRole !== 'admin'}
           >
-            {row.original.isActive ? 'Unblock' : 'Block'}
+            {row.original.isActive ? 'Block' : 'UnBlock'}
           </Button>
         )
       }
@@ -575,7 +575,7 @@ const UserListTable = () => {
             Cancel
           </Button>
           <Button onClick={handleToggleBlockConfirm} color='secondary'>
-            {isBlocking ? 'UnBlock' : 'Block'}
+            {isBlocking ? 'Block' : 'UnBlock'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -67,7 +67,7 @@ const RoleCards = () => {
                 }}
                 size='small'
               >
-                Add Role
+                Add Roles
               </Button>
               <Typography>
                 Add new role, <br />
