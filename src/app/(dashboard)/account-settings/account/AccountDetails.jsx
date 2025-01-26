@@ -160,6 +160,10 @@ import { useEffect, useState } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+import { toast, ToastContainer } from 'react-toastify'
+
+import 'react-toastify/dist/ReactToastify.css'
+
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
@@ -228,11 +232,14 @@ const AccountDetails = () => {
       const payload = { adminId: adminDetails?._id, name, email, mobile: phoneNumber }
 
       try {
-        await changeAdminDetails(payload)
-        alert('Admin User Details Updated')
+        const response = await changeAdminDetails(payload)
+        if (response.status === 200) {
+          // window.location.reload()
+          toast.success('Details Updated successfully, Please Login again ')
+        }
       } catch (error) {
         console.error(error)
-        alert('Failed to update admin details')
+        toast.error('Failed to update details')
       }
     }
   }
@@ -251,6 +258,7 @@ const AccountDetails = () => {
 
   return (
     <Card>
+      <ToastContainer />
       <CardContent>
         <form onSubmit={e => e.preventDefault()}>
           <Grid container spacing={6}>
@@ -281,6 +289,7 @@ const AccountDetails = () => {
             <Grid item xs={12} sm={6}>
               <CustomTextField
                 fullWidth
+                type='number'
                 label='Phone Number'
                 value={formData.phoneNumber}
                 onChange={e => handleFormChange('phoneNumber', e.target.value)}

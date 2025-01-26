@@ -240,7 +240,8 @@ const MainPage = () => {
   const fetchAllFunctionLists = async () => {
     setLoading(true)
     try {
-      const response = await getJobRoles() // Fetch all job roles (no pagination)
+      const searchParam = globalFilter ? globalFilter : ''
+      const response = await getJobRoles(page, rowsPerPage, searchParam)
       console.log('jobs', response.data.data.data)
       if (response.status === 200) {
         console.log('count', response.data.data.totalCount)
@@ -259,6 +260,10 @@ const MainPage = () => {
     fetchFunctions()
     fetchAllFunctionLists() // Ensure job roles are also fetched
   }, [])
+
+  useEffect(() => {
+    fetchAllFunctionLists()
+  }, [page, rowsPerPage, globalFilter])
 
   const validateField = (field, value) => {
     let isValid = true

@@ -864,18 +864,18 @@ const MainPage = () => {
           <DialogTitle>
             <Box display='flex' alignItems='center' gap={1.5}>
               {/* Conditional Icon */}
-              {editingIndex !== null ? <EditIcon color='primary' /> : <AddCircleOutline color='success' />}
+              {/* {editingIndex !== null ? <EditIcon color='primary' /> : <AddCircleOutline color='success' />} */}
               <Box>
                 {/* Title */}
                 <Typography variant='h5' component='span'>
                   {editingIndex !== null ? 'Edit Industry' : 'Add Funtion'}
                 </Typography>
                 {/* Subtitle */}
-                <Typography variant='subtitle2' sx={{ color: 'gray', marginTop: 0.5, fontStyle: 'italic' }}>
+                {/* <Typography variant='subtitle2' sx={{ color: 'gray', marginTop: 0.5, fontStyle: 'italic' }}>
                   {editingIndex !== null
                     ? 'Modify details like name, color, and more.'
                     : 'Fill in the details like name, color, and description to create a new industry.'}
-                </Typography>
+                </Typography> */}
               </Box>
             </Box>
           </DialogTitle>

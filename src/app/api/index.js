@@ -51,7 +51,8 @@ export const getFunctions = (page, limit, globalFilter) =>
   axios(`admin/auth/getallfunctions?page=${page}&limit=${limit}&search=${globalFilter}`, 'GET')
 
 // api to get all jobs roles
-export const getJobRoles = (page, limit) => axios(`admin/auth/getalljobs?page=${page}&limit=${limit}`, 'GET')
+export const getJobRoles = (page, limit, search) =>
+  axios(`admin/auth/getalljobs?page=${page}&limit=${limit}&search=${search}`, 'GET')
 export const createJobRoles = data => axios('admin/auth/createjobrole', 'POST', data)
 export const deleteJobRoles = data => axios('admin/auth/deletejobrole', 'DELETE', data)
 export const updateJobRoles = data => axios('admin/auth/updatejobrole', 'PUT', data)

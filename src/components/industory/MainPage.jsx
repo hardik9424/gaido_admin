@@ -275,7 +275,11 @@ const MainPage = () => {
 
   useEffect(() => {
     fetchAllIndustryLists()
-  }, [page, globalFilter])
+  }, [])
+
+  useEffect(() => {
+    fetchAllIndustryLists()
+  }, [page, globalFilter, rowsPerPage])
 
   // Handle input changes for name, description, and details
   const validateField = (field, value) => {
@@ -1005,10 +1009,16 @@ const MainPage = () => {
                     fullWidth={false}
                     margin='normal'
                     sx={{ maxWidth: 200 }}
+                    // InputProps={{
+                    //   style: {
+                    //     backgroundColor: formData.BackgroundColor, // Set background color
+                    //     BackgroundColor: formData.BackgroundColor === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                    //   }
+                    // }}
                     InputProps={{
                       style: {
                         backgroundColor: formData.BackgroundColor, // Set background color
-                        BackgroundColor: formData.BackgroundColor === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
+                        color: formData.BackgroundColor === '#ffffff' ? '#000' : '#fff' // Ensure text contrast
                       }
                     }}
                   />
@@ -1026,10 +1036,10 @@ const MainPage = () => {
                       onChangeComplete={color => {
                         setFormData(prevState => ({
                           ...prevState,
-                          BackgroundColor: color.hex // Update the color in state
+                          BackgroundColor: color.hex
                         }))
                       }}
-                      disableAlpha // Remove alpha slider for simplicity
+                      disableAlpha
                     />
                   </Popover>
                 </Box>

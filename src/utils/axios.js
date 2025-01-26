@@ -4,7 +4,7 @@ import config from '@/config'
 
 export default (endpoint, method, data, isMultipart) =>
   axios({
-    url: ` https://gaido-api.applore.in/api/${endpoint}`,
+    url: ` http://localhost:4000/api/${endpoint}`,
     method,
     data,
     headers: {
@@ -18,3 +18,5 @@ export default (endpoint, method, data, isMultipart) =>
 //url: `http://localhost:2008/subscription/api/v1/${endpoint}`  
 //  url: `https://pawsome.applore.in/${service}/api/v1/${endpoint}`,
 // url: `http://localhost:${port}/${service}/api/v1/${endpoint}`,
+// http://localhost:4000
+// url: ` https://gaido-api.applore.in/api/${endpoint}`,

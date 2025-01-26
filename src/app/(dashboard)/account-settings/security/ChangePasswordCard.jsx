@@ -12,6 +12,10 @@
 // React Imports
 import { useState, useCallback, useRef, useEffect } from 'react'
 
+
+
+import { useRouter } from 'next/navigation'
+
 import { toast, ToastContainer } from 'react-toastify'
 
 // MUI Imports
@@ -46,6 +50,8 @@ const ChangePasswordCard = () => {
   const [loading, setLoading] = useState(false)
   const [userData, setUserData] = useState()
 
+  const router = useRouter
+
   const otpRefs = useRef([])
 
   useEffect(() => {
@@ -72,14 +78,15 @@ const ChangePasswordCard = () => {
 
       console.log('otp', response)
       if (response.status === 200) {
-        toast.success('OTP sent successfully')
+        toast.success('Password changed successfully')
+        // window.location.reload()
       }
 
       // setSessionToken(response.data.data.sessionToken)
       // setIsOtpSent(true)
     } catch (error) {
-      console.error('Error sending OTP:', error)
-      toast.error('Error sending OTP')
+      console.error('Error updating password:', error)
+      toast.error('Error Updating Password')
     } finally {
       setLoading(false)
     }
