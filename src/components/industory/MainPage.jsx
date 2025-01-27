@@ -583,6 +583,14 @@ const MainPage = () => {
     // setTotalItems(5)
   }, [globalFilter])
 
+  const capitalizeFirstLetter = string => {
+    if (!string) return '' // Handle null or undefined input
+    return string
+      .split(' ') // Split the string into words
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+      .join(' ') // Join the words back into a single string
+  }
+
   return (
     <>
       <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
@@ -723,7 +731,9 @@ const MainPage = () => {
                       <TableCell>
                         <Tooltip title={industry.name.length > 20 ? industry.name : ''}>
                           <span>
-                            {industry.name.length > 20 ? `${industry.name.substring(0, 20)}...` : industry.name}
+                            {industry.name.length > 20
+                              ? `${capitalizeFirstLetter(industry.name.substring(0, 20))}...`
+                              : capitalizeFirstLetter(industry.name)}
                           </span>
                         </Tooltip>
                       </TableCell>

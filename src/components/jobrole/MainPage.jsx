@@ -589,6 +589,13 @@ const MainPage = () => {
       toast.error('Please select a valid CSV file.')
     }
   }
+  const capitalizeFirstLetter = string => {
+    if (!string) return '' // Handle null or undefined input
+    return string
+      .split(' ') // Split the string into words
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+      .join(' ') // Join the words back into a single string
+  }
 
   return (
     <Box sx={{ padding: 4, maxWidth: '1800px', margin: 'auto' }}>
@@ -757,7 +764,12 @@ const MainPage = () => {
                     }
                   }}
                 >
-                  <TableCell>{industry.name}</TableCell>
+                  <TableCell>
+                    {' '}
+                    {industry.name.length > 20
+                      ? `${capitalizeFirstLetter(industry.name.substring(0, 20))}...`
+                      : capitalizeFirstLetter(industry.name)}
+                  </TableCell>
                   <TableCell>{industry.description}</TableCell>
                   <TableCell>
                     <Button
