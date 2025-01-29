@@ -276,13 +276,15 @@ const MainPage = () => {
       BackgroundColor: content?.color,
       BackgroundImage: content?.imageUrl
     })
-
+    const functions = content?.functionDetails?.map(data => data._id)
+    setSelectedFunctionIds(functions)
     setViewModalOpen(true) // Open the modal
   }
 
   const handleCloseViewModal = () => {
     setViewModalOpen(false) // Close the modal
     setHtmlContent('') // Clear the HTML content
+    setSelectedFunctionIds([]) // Clear the selected function IDs from
   }
 
   const router = useRouter()
@@ -544,6 +546,7 @@ const MainPage = () => {
     setOpenModal(false)
     setEditingIndex('')
     setTouchedFields({}) //
+    setSelectedFunctionIds([])
   }
 
   // Handle Delete Industry

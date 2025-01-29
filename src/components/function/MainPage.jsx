@@ -159,7 +159,11 @@ const MainPage = () => {
       const response = await getIndustryList(page, 1000, '')
       if (response.status === 200) {
         console.log('ind', response.data.data)
-        setIndustryData(response.data.data.industries)
+        const filteredIndustries = response.data.data.industries.filter(
+          industry => industry.name && industry.name.trim() !== ''
+        )
+
+        setIndustryData(filteredIndustries)
       }
     } catch (error) {}
   }
@@ -199,12 +203,15 @@ const MainPage = () => {
   }, [adminId])
 
   const handleViewDetails = content => {
+    console.log('details', content)
     setHtmlContent(content.htmlContent) // Set the HTML content
     setFormData({
       name: content?.name,
       description: content?.description,
       details: content?.htmlContent // Set the HTML content
     })
+    const industrues = content?.industryData?.filter(data => data.name && data._id).map(data => data._id)
+    setSelectedIndustryIds(industrues)
 
     setViewModalOpen(true) // Open the modal
   }
@@ -212,6 +219,7 @@ const MainPage = () => {
   const handleCloseViewModal = () => {
     setViewModalOpen(false) // Close the modal
     setHtmlContent('') // Clear the HTML content
+    setSelectedIndustryIds([])
   }
   const reactQuillRef = useRef()
   const router = useRouter()
@@ -372,6 +380,7 @@ const MainPage = () => {
     setOpenModal(false)
     setTouchedFields({})
     setEditingIndex('')
+    setSelectedIndustryIds([])
   }
 
   // Handle Delete Industry
@@ -789,7 +798,7 @@ const MainPage = () => {
                         industry?.industryData?.map((industryItem, i) => (
                           <Chip
                             key={i}
-                            label={industryItem.name} // ✅ Display industry name
+                            label={industryItem?.name ? industryItem.name : 'Unnamed'}
                             sx={{ fontSize: 15, height: 24, margin: '2px' }}
                             color='primary'
                             variant='outlined'
@@ -987,7 +996,7 @@ const MainPage = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth variant='outlined' sx={{ maxWidth: 300 }}>
+                <FormControl fullWidth variant='outlined' sx={{ maxWidth: 450 }}>
                   <InputLabel>Select Industry</InputLabel>
                   <Select
                     multiple
@@ -1020,19 +1029,19 @@ const MainPage = () => {
 
                     {/* Individual Items */}
                     {industryData?.map(item => (
-                      <MenuItem key={item._id} value={item._id}>
+                      <MenuItem key={item?._id} value={item?._id}>
                         <Checkbox
-                          checked={selectedIndustruIds?.includes(item._id)}
-                          onChange={() => handleIndustrySelection(item._id)}
+                          checked={selectedIndustruIds?.includes(item?._id)}
+                          onChange={() => handleIndustrySelection(item?._id)}
                         />
-                        <ListItemText primary={item.name} />
+                        <ListItemText primary={item?.name} />
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                   {selectedIndustruIds?.map(id => {
-                    const func = industryData.find(f => f._id === id)
+                    const func = industryData?.find(f => f?._id === id)
                     return (
                       <Chip
                         key={id}
