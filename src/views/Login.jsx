@@ -36,6 +36,7 @@ import themeConfig from '@configs/themeConfig'
 import { useImageVariant } from '@core/hooks/useImageVariant'
 
 import { useSettings } from '@core/hooks/useSettings'
+import { Dashboard } from '@mui/icons-material'
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -215,7 +216,8 @@ const LoginV2 = ({ mode }) => {
             const permissionPageMap = {
               Admin: '/role/newrole',
               Users: '/user/list',
-              Dashboard: '/home',
+              // Dashboard: '/home',
+              Dashboard: '/role/newrole',
               Functions: '/functions',
               Industry: '/industory',
               'Job Roles': '/jobroles',

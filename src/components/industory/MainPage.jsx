@@ -39,7 +39,15 @@ import {
   Card,
   CardMedia,
   Popover,
-  Typography
+  Typography,
+  FormGroup,
+  FormControl,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  InputLabel,
+  Chip
 } from '@mui/material'
 
 import {
@@ -82,7 +90,8 @@ import {
   editIndustry,
   uploadFile,
   adminDetails,
-  uploadCsv
+  uploadCsv,
+  getFunctions
 } from '@/app/api'
 import CustomTextField from '@/@core/components/mui/TextField'
 
@@ -90,6 +99,7 @@ const MainPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    functions: [],
     details: '',
     BackgroundColor: '',
     BackgroundImage: '',
@@ -124,6 +134,45 @@ const MainPage = () => {
   const [adminId, setAdminId] = useState('')
   const [hoveredImage, setHoveredImage] = useState(null)
   const [anchorEl, setAnchorEl] = useState(null)
+  const [functionLists, setFunctionLists] = useState([])
+  const [selectedFunctionIds, setSelectedFunctionIds] = useState([])
+  const [open, setOpen] = useState(false)
+
+  //to check if all selected function
+  const selectAllFunctions = functionLists.length > 0 && selectedFunctionIds.length === functionLists.length
+
+  //handle selecet individual function
+  const handleSelect = id => {
+    // if (selectedFunctionIds.includes(id)) {
+    //   setSelectedFunctionIds(selectedFunctionIds?.filter(id => id !== id))
+    // } else {
+    //   setSelectedFunctionIds([...selectedFunctionIds, id])
+    // }
+    setSelectedFunctionIds(prevState =>
+      prevState.includes(id) ? prevState.filter(item => item !== id) : [...prevState, id]
+    )
+  }
+  //select all function
+  const handleSelectAll = () => {
+    if (selectAllFunctions) {
+      setSelectedFunctionIds([])
+    } else {
+      setSelectedFunctionIds(functionLists.map(item => item._id))
+    }
+  }
+
+  const fetchFunction = async () => {
+    try {
+      const response = await getFunctions(page, 1000, '')
+      if (response.status === 200) {
+        console.log('func', response)
+        setFunctionLists(response.data.data.data)
+      }
+    } catch (error) {
+      console.error(error)
+      setFunctionLists([])
+    }
+  }
 
   const handleImageHover = (event, imageUrl) => {
     setHoveredImage(imageUrl)
@@ -275,6 +324,7 @@ const MainPage = () => {
 
   useEffect(() => {
     fetchAllIndustryLists()
+    fetchFunction()
   }, [])
 
   useEffect(() => {
@@ -400,6 +450,10 @@ const MainPage = () => {
         BackgroundColor: industry.color || '',
         BackgroundImage: industry.imageUrl || ''
       })
+      const functionIds = industry.functionDetails?.map(func => func._id) || []
+      setSelectedFunctionIds(functionIds)
+
+      setEditingIndex(industry._id)
       setEditingIndex(industry._id) // Save the index or ID to track which industry is being edited
     } else {
       // If no industry is passed, this means it's for adding a new industry, so reset the form
@@ -409,6 +463,7 @@ const MainPage = () => {
         details: '',
         isImportant: false
       })
+      setSelectedFunctionIds([])
       setEditingIndex(null) // Reset editing index when adding a new industry
     }
     setOpenModal(true) // Open the modal
@@ -419,8 +474,10 @@ const MainPage = () => {
       const payload = {
         name: formData.name,
         description: formData.description,
+        functions: selectedFunctionIds,
         htmlContent: formData.details,
         color: formData.BackgroundColor,
+        functions: selectedFunctionIds,
         imageUrl: formData.BackgroundImage
       }
 
@@ -431,6 +488,7 @@ const MainPage = () => {
             _id: editingIndex,
             name: formData.name,
             description: formData.description,
+            functions: selectedFunctionIds,
             htmlContent: formData.details,
             color: formData.BackgroundColor,
             imageUrl: formData.BackgroundImage
@@ -697,6 +755,7 @@ const MainPage = () => {
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Functions</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
@@ -760,6 +819,23 @@ const MainPage = () => {
                         >
                           View Details
                         </Button>
+                      </TableCell>
+                      <TableCell>
+                        {industry?.functionDetails?.length > 0 ? (
+                          industry?.functionDetails?.map((functionItem, i) => (
+                            <Chip
+                              key={i}
+                              label={functionItem.name} // ✅ Display industry name
+                              sx={{ fontSize: 15, height: 24, margin: '2px' }}
+                              color='primary'
+                              variant='outlined'
+                            />
+                          ))
+                        ) : (
+                          <Typography variant='body2' color='textSecondary'>
+                            N/A
+                          </Typography>
+                        )}
                       </TableCell>
 
                       <TableCell>
@@ -988,6 +1064,65 @@ const MainPage = () => {
                   </Popover>
                 </Box>
               </Grid> */}
+              <Grid item xs={12}>
+                <FormControl fullWidth variant='outlined' sx={{ maxWidth: 300 }}>
+                  <InputLabel>Select Functions</InputLabel>
+                  <Select
+                    multiple
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    onOpen={() => setOpen(true)}
+                    value={selectedFunctionIds}
+                    onChange={() => {}}
+                    input={<OutlinedInput label='Select Functions' />}
+                    renderValue={selected =>
+                      selected.length === 0
+                        ? 'None'
+                        : functionLists
+                            .filter(item => selected.includes(item._id))
+                            .map(item => item.name)
+                            .join(', ')
+                    }
+                  >
+                    {/* Select All */}
+                    <MenuItem>
+                      <Checkbox
+                        checked={selectAllFunctions}
+                        indeterminate={
+                          selectedFunctionIds.length > 0 && selectedFunctionIds.length < functionLists.length
+                        }
+                        onChange={handleSelectAll}
+                      />
+                      <ListItemText primary='Select All' />
+                    </MenuItem>
+
+                    {/* Individual Items */}
+                    {functionLists?.map(item => (
+                      <MenuItem key={item._id} value={item._id}>
+                        <Checkbox
+                          checked={selectedFunctionIds.includes(item._id)}
+                          onChange={() => handleSelect(item._id)}
+                        />
+                        <ListItemText primary={item.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                  {selectedFunctionIds?.map(id => {
+                    const func = functionLists.find(f => f._id === id)
+                    return (
+                      <Chip
+                        key={id}
+                        label={func?.name}
+                        onDelete={() => handleSelect(id)}
+                        color='secondary'
+                        variant='outlined'
+                      />
+                    )
+                  })}
+                </Box>
+              </Grid>
 
               <Grid item xs={12}>
                 <Typography variant='subtitle1' sx={{ marginBottom: 1 }}>

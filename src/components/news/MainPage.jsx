@@ -406,7 +406,7 @@ const MainPage = () => {
   const handleAddTag = () => {
     setFormData(prevState => ({
       ...prevState,
-      tags: Array.isArray(prevState.tags) ? [...prevState.tags, ''] : [''] // Ensure tags is an array
+      tags: Array.isArray(prevState.tags) ? [...prevState.tags, ''] : ['']
     }))
   }
 

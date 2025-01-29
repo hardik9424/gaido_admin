@@ -39,7 +39,14 @@ import {
   Card,
   Pagination,
   Popover,
-  Typography
+  Typography,
+  MenuItem,
+  ListItemText,
+  OutlinedInput,
+  FormControl,
+  InputLabel,
+  Select,
+  Chip
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -84,6 +91,7 @@ const MainPage = () => {
     name: '',
     description: '',
     details: '', // For React Quill content
+    industries: [],
     color: '',
     imageUrl: '',
     isImportant: false
@@ -113,6 +121,10 @@ const MainPage = () => {
   const [permissions, setPermissions] = useState({ create: false, read: false, edit: false, delete: false })
   const [adminId, setAdminId] = useState('')
 
+  const [industryData, setIndustryData] = useState([])
+  const [selectedIndustruIds, setSelectedIndustryIds] = useState([])
+  const [open, setOpen] = useState(false)
+
   const DebouncedInput = ({ value: initialValue, onChange, debounce = 700, ...props }) => {
     const [value, setValue] = useState(initialValue)
 
@@ -140,6 +152,16 @@ const MainPage = () => {
   const handleImageHover = (event, imageUrl) => {
     setHoveredImage(imageUrl)
     setAnchorEl(event.currentTarget) // Set the anchor element for the popover
+  }
+
+  const fetchIndustryData = async () => {
+    try {
+      const response = await getIndustryList(page, 1000, '')
+      if (response.status === 200) {
+        console.log('ind', response.data.data)
+        setIndustryData(response.data.data.industries)
+      }
+    } catch (error) {}
   }
 
   const handleImageLeave = () => {
@@ -200,6 +222,7 @@ const MainPage = () => {
       const searchParam = globalFilter ? globalFilter : ''
       const response = await getFunctions(page, rowsPerPage, searchParam)
       if (response.status === 200) {
+        console.log('func', response.data.data)
         setIndustriesLists(response.data.data)
         setTotalItems(response.data.data.totalCount)
       }
@@ -210,9 +233,28 @@ const MainPage = () => {
       setLoading(false)
     }
   }
+  const isAllSelected = industryData.length > 0 && selectedIndustruIds?.length === industryData?.length
+
+  // handle individual industry selections
+  const handleIndustrySelection = id => {
+    if (selectedIndustruIds.includes(id)) {
+      setSelectedIndustryIds(prevState => prevState.filter(i => i !== id))
+    } else {
+      setSelectedIndustryIds([...selectedIndustruIds, id])
+    }
+  }
+  // handle select all industry
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIndustryIds([])
+    } else {
+      setSelectedIndustryIds(industryData.map(i => i._id))
+    }
+  }
 
   useEffect(() => {
     fetchAllFunctionLists()
+    fetchIndustryData()
   }, [page, globalFilter])
 
   // Handle input changes for name, description, and details
@@ -235,6 +277,7 @@ const MainPage = () => {
         name: formData.name,
         description: formData.description,
         htmlContent: formData.details,
+        industries: selectedIndustruIds,
         color: formData.color,
         imageUrl: formData.imageUrl
       }
@@ -246,6 +289,7 @@ const MainPage = () => {
             _id: editingIndex,
             name: formData.name,
             description: formData.description,
+            industries: selectedIndustruIds,
             htmlContent: formData.details,
             color: formData.color,
             imageUrl: formData.imageUrl
@@ -308,11 +352,14 @@ const MainPage = () => {
         // isImportant: industry.isImportant || false
       })
       setEditingIndex(industry._id)
+      const getIndustryIds = industry?.industryData?.map(industry => industry._id || [])
+      setSelectedIndustryIds(getIndustryIds)
     } else {
       // If no industry is passed, this means it's for adding a new industry, so reset the form
       setFormData({
         name: '',
         description: '',
+        industries: [],
         details: '',
         isImportant: false
       })
@@ -681,6 +728,7 @@ const MainPage = () => {
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Name</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Details</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Industry</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Color</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Image</TableCell>
                 <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Actions</TableCell>
@@ -735,6 +783,23 @@ const MainPage = () => {
                       >
                         View Details
                       </Button>
+                    </TableCell>
+                    <TableCell>
+                      {industry?.industryData?.length > 0 ? (
+                        industry?.industryData?.map((industryItem, i) => (
+                          <Chip
+                            key={i}
+                            label={industryItem.name} // ✅ Display industry name
+                            sx={{ fontSize: 15, height: 24, margin: '2px' }}
+                            color='primary'
+                            variant='outlined'
+                          />
+                        ))
+                      ) : (
+                        <Typography variant='body2' color='textSecondary'>
+                          N/A
+                        </Typography>
+                      )}
                     </TableCell>
 
                     <TableCell>
@@ -920,6 +985,65 @@ const MainPage = () => {
                   error={touchedFields.description && !isFormValid.description} // Show error only if touched
                   helperText={touchedFields.description && !isFormValid.description ? 'Description is required' : ''}
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth variant='outlined' sx={{ maxWidth: 300 }}>
+                  <InputLabel>Select Industry</InputLabel>
+                  <Select
+                    multiple
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    onOpen={() => setOpen(true)}
+                    value={selectedIndustruIds}
+                    // onChange={event => setSelectedIndustryIds(event.target.value)}
+                    input={<OutlinedInput label='Select Industries' />}
+                    renderValue={selected =>
+                      selected.length === 0
+                        ? 'None'
+                        : industryData
+                            .filter(item => selected.includes(item._id))
+                            .map(item => item.name)
+                            .join(', ')
+                    }
+                  >
+                    {/* Select All */}
+                    <MenuItem>
+                      <Checkbox
+                        checked={isAllSelected}
+                        indeterminate={
+                          selectedIndustruIds?.length > 0 && selectedIndustruIds?.length < industryData.length
+                        }
+                        onChange={handleSelectAll}
+                      />
+                      <ListItemText primary='Select All' />
+                    </MenuItem>
+
+                    {/* Individual Items */}
+                    {industryData?.map(item => (
+                      <MenuItem key={item._id} value={item._id}>
+                        <Checkbox
+                          checked={selectedIndustruIds?.includes(item._id)}
+                          onChange={() => handleIndustrySelection(item._id)}
+                        />
+                        <ListItemText primary={item.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                  {selectedIndustruIds?.map(id => {
+                    const func = industryData.find(f => f._id === id)
+                    return (
+                      <Chip
+                        key={id}
+                        label={func?.name}
+                        onDelete={() => handleIndustrySelection(id)}
+                        color='secondary'
+                        variant='outlined'
+                      />
+                    )
+                  })}
+                </Box>
               </Grid>
               {/* color picker */}
 
