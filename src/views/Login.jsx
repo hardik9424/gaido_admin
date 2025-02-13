@@ -338,7 +338,7 @@ const LoginV2 = ({ mode }) => {
               }}
             />
             {error && <Typography color='error'>{error}</Typography>}
-            <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
+            {/* <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <Typography
                 className='text-end'
                 style={{
@@ -352,7 +352,7 @@ const LoginV2 = ({ mode }) => {
               >
                 Forgot password?
               </Typography>
-            </div>
+            </div> */}
             <Button
               fullWidth
               variant=''

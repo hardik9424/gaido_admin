@@ -210,7 +210,7 @@ const MainPage = () => {
       description: content?.description,
       details: content?.htmlContent // Set the HTML content
     })
-    const industrues = content?.industryData?.filter(data => data.name && data._id).map(data => data._id)
+    const industrues = content?.industryData?.filter(data => data.name && data.name.trim() !== '').map(data => data._id)
     setSelectedIndustryIds(industrues)
 
     setViewModalOpen(true) // Open the modal
